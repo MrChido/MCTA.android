@@ -1,0 +1,344 @@
+import 'package:flutter/material.dart';
+import 'services/database_helper.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'entry_screen.dart';
+import 'package:intl/intl.dart';
+import 'Utilities/date_util.dart';
+//While color_util.dart doesnt affect this file directly, it is piggybacking off of
+//the one below affecting this file.
+import 'Widgs/calendar_widg.dart';
+//This allows main.dart to access information found in the data_review document to
+//display the pertnent information in the correct spot
+import 'dart:convert';
+import 'Widgs/data_review.dart';
+
+void main() {
+  databaseFactory = databaseFactoryFfi;
+  runApp((SymptomTrackerApp()));
+}
+
+typedef DayTapCallback = void Function(int day);
+
+class SymptomTrackerApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Symptom Tracker',
+      theme: ThemeData(primarySwatch: Colors.teal),
+      home: CalendarScreen(),
+    );
+  }
+}
+
+class CalendarScreen extends StatefulWidget {
+  @override
+  State<CalendarScreen> createState() => _CalendarScreenState();
+}
+
+//ensuring any jason markers do not get displayed
+List<dynamic> safeDecodeList(String? source) {
+  if (source == null || source.trim().isEmpty) return [];
+  try {
+    final decoded = jsonDecode(source);
+    return decoded is List ? decoded : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+String removeBacksLashes(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return 'N/A';
+
+  return raw.replaceAll('\\', '').trim();
+}
+
+class _CalendarScreenState extends State<CalendarScreen> {
+  DateTime currentMonth = DateTime.now(); //asking the device the year and month
+  Map<int, int> entriesPerDay = {};
+  bool isReviewMode = false;
+  List<int> reviewedDays = [];
+  DateTime? selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    loadEntries();
+    loadReviewedDays();
+    _syncToCurrentMonthIfNeeded();
+  }
+
+  //setting up automatic advance of the calendar.
+  void _syncToCurrentMonthIfNeeded() {
+    final now = DateUtilHelper.getCurrentMonth();
+    if (!DateUtilHelper.isSameMonth(currentMonth, now)) {
+      setState(() {
+        currentMonth = DateTime(now.year, now.month);
+        entriesPerDay.clear();
+        loadEntries();
+        if (isReviewMode) loadReviewedDays();
+      });
+    }
+  }
+
+  void loadReviewedDays() async {
+    final dbHelper = DatabaseHelper();
+    final int selectedYear = currentMonth.year;
+    final int selectedMonth = currentMonth.month;
+
+    final entryDays =
+        await dbHelper.getDaysWithEntries(selectedYear, selectedMonth);
+    setState(() {
+      reviewedDays = entryDays;
+    });
+  }
+
+  void loadEntries() async {
+    final dbHelper = DatabaseHelper();
+    final db = await dbHelper.database;
+
+    final String yearStr = currentMonth.year.toString();
+    final String monthStr = currentMonth.month.toString().padLeft(2, '0');
+
+    final result = await db.rawQuery(
+      '''SELECT timestamp FROM entries WHERE strftime('%Y', timestamp) = ? AND strftime('%m', timestamp) = ?''',
+      [yearStr, monthStr],
+    );
+
+    final Map<int, int> tempMap = {};
+    for (final row in result) {
+      final ts = DateTime.parse(
+          row['timestamp'] as String); //defining the 'timestamp' as a string
+      final day = ts.day;
+      tempMap[day] = (tempMap[day] ?? 0) + 1;
+    }
+    setState(() {
+      entriesPerDay = tempMap;
+    });
+  }
+
+  Future<void> _onDayTapped(int day) async {
+    if (isReviewMode) {
+      setState(() {
+        selectedDate = DateTime(currentMonth.year, currentMonth.month, day);
+      });
+      return;
+    }
+    final didAddEntry = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EntryScreen(
+          day: day,
+          updateEntryCount: (d) => _onDayTapped(d),
+        ),
+      ),
+    );
+    if (didAddEntry == true) {
+      setState(() {
+        entriesPerDay[day] = (entriesPerDay[day] ?? 0) + 1;
+      });
+    }
+  }
+
+  @override // this is what the user opens up to
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(title: Text('Daily Journal')),
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                      icon: Icon(Icons.arrow_left),
+                      onPressed: () async {
+                        setState(() {
+                          currentMonth = DateTime(
+                              currentMonth.year, currentMonth.month - 1);
+                          entriesPerDay.clear();
+                          reviewedDays.clear();
+                          isReviewMode = false;
+                        });
+                        loadEntries();
+
+                        if (isReviewMode) {
+                          loadReviewedDays();
+                        }
+                      }),
+                  //changed the Month and Year declaration to a clickable, this way the user can jump between months and years
+                  //at a greater distance than one month at a time.
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: currentMonth,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now().add(Duration(days: 365 * 5)),
+                        initialDatePickerMode: DatePickerMode.year,
+                      );
+
+                      if (picked != null) {
+                        setState(() {
+                          currentMonth = DateTime(picked.year, picked.month);
+                          entriesPerDay.clear();
+                          reviewedDays.clear();
+                          isReviewMode = false;
+                        });
+                        loadEntries();
+                      }
+                    },
+                    child: Text(
+                      DateFormat.yMMMM().format(currentMonth),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.arrow_right),
+                    onPressed: () async {
+                      setState(() {
+                        currentMonth =
+                            DateTime(currentMonth.year, currentMonth.month + 1);
+                        entriesPerDay.clear();
+                        reviewedDays.clear();
+                        isReviewMode = false;
+                        loadEntries();
+                      });
+                    },
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              CalendarWidget(
+                currentMonth: currentMonth,
+                firstWeekday:
+                    DateTime(currentMonth.year, currentMonth.month, 1).weekday,
+                daysInMonth:
+                    DateTime(currentMonth.year, currentMonth.month + 1, 0).day,
+                entriesPerDay: entriesPerDay,
+                reviewedDays: reviewedDays,
+                isReviewMode: isReviewMode,
+                onDayTapped: _onDayTapped,
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  'Tap a day to log symptoms',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    isReviewMode = !isReviewMode;
+                    if (isReviewMode) {
+                      loadReviewedDays();
+                    } else if (!isReviewMode) {
+                      selectedDate = null;
+                    } else {
+                      reviewedDays.clear();
+                    }
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      isReviewMode ? Color(0xFF4B0082) : Colors.grey[300],
+                  foregroundColor: isReviewMode ? Colors.white : Colors.black,
+                  elevation: isReviewMode ? 6 : 2,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadiusGeometry.circular(10),
+                  ),
+                ),
+                child:
+                    Text(isReviewMode ? "Exit Review Mode" : "Review Entries"),
+              ),
+              if (isReviewMode && selectedDate != null)
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: DatabaseHelper().getEntriesforDate(selectedDate!),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Padding(
+                        padding: EdgeInsets.all(16),
+                        child: CircularProgressIndicator(),
+                      );
+                    } else if (snapshot.hasError) {
+                      return Text("Error loading entries: ${snapshot.error}");
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                            "No entries for ${DateFormat.yMMMM().format(currentMonth)}"),
+                      );
+                    }
+
+                    final entries = snapshot.data!;
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: entries.length,
+                      itemBuilder: (context, index) {
+                        final entry = entries[index];
+                        final weight =
+                            (entry['weight'] as num?)?.toStringAsFixed(1) ??
+                                'N/A';
+                        final timestamp = (entry['timestamp'] as String?) ?? '';
+                        final day = entry['day'] ?? '?';
+
+                        //the folowing changes the look of the JSON data to look mmore pleasing
+                        final actList =
+                            removeBacksLashes(entry['activities'] as String?);
+                        final conList =
+                            removeBacksLashes(entry['mnm'] as String?);
+                        final fnsList =
+                            removeBacksLashes(entry['symptoms'] as String?);
+
+                        return FutureBuilder<int>(
+                          future: () async {
+                            try {
+                              final db = await DatabaseHelper.instance.database;
+                              print('🛠️ sleepMinder Future is initializing');
+                              return await sleepMinder(db, entry);
+                            } catch (e) {
+                              print('🔥 sleepMinder failed: $e');
+                              return 0;
+                            }
+                          }(), // <-- This was missing proper closure
+                          builder: (context, snapshot) {
+                            final distilledTime = snapshot.data ?? 0;
+                            final fatuige = entry['fatuigue'] == 1
+                                ? 'Fatiuged'
+                                : 'No Fatuige';
+
+                            return Card(
+                              margin: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              child: ListTile(
+                                title: Text(
+                                    "Day $day • ${timestamp.split('T')[0]}"),
+                                subtitle: Text(
+                                  "$fatuige • Severity: ${entry['severity']}\n"
+                                  "Weight: $weight lbs • Water Intake: ${entry['water'] ?? 'N/A'} oz\n"
+                                  "Hours slept: $distilledTime\n"
+                                  "Consumptions: $conList\n"
+                                  "Activities: $actList\n"
+                                  "Feelings and Symptoms: $fnsList",
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                )
+            ],
+          ),
+        ));
+  }
+}
