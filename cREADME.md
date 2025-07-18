@@ -50,3 +50,5 @@ After a full day of not having internet acess, oh what sadness, a late-night cod
 With the behavior adjusted we are complete with "vision 1" what was going on is that the review entries button was not waiting for a date selection and automaticaly dumping the months entries on screen, that was corrected. then the dates were only redirecting users to the entry screen, but was not observing the fact taht the app was in "review entries mode" aditionaly, now that it is all ironed out, the user can transition between dates and the exit of review mode, will clear the card area of the app. the final key to vision 1 to being complete on windows machines.
 
 The next task is to get 'vision 1' ready for android devices.
+July 18 2025
+Made sure some of the back of the house codeing is complted, havent really modified the code for the app just yet. Implemented device file structure access for the app, will concider including an export feature while making android-oriented adjustments.
