@@ -52,3 +52,5 @@ With the behavior adjusted we are complete with "vision 1" what was going on is 
 The next task is to get 'vision 1' ready for android devices.
 July 18 2025
 Made sure some of the back of the house codeing is complted, havent really modified the code for the app just yet. Implemented device file structure access for the app, will concider including an export feature while making android-oriented adjustments.
+July 22 2025
+Just got the coded portions of the app ready to be android device compatable. we will next be making it available for the field testers.

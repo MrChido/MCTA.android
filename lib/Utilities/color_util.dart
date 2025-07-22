@@ -31,10 +31,10 @@ double getFlameSize(int entryCount) {
     return 0; //remains hidden for the sake of the icon size at the begining.
   }
   const double minSize = 20;
-  const double mazSize = 30;
+  const double maxSize = 30;
   const int sStart = 10;
   const int sEnd = 20;
 
   final flareUp = ((entryCount - sStart) / (sEnd - sStart)).clamp(0.0, 1.0);
-  return minSize + (mazSize - minSize) * flareUp;
+  return minSize + (maxSize - minSize) * flareUp;
 }

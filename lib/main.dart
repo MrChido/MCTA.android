@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'services/database_helper.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'entry_screen.dart';
 import 'package:intl/intl.dart';
 import 'Utilities/date_util.dart';
@@ -13,7 +12,6 @@ import 'dart:convert';
 import 'Widgs/data_review.dart';
 
 void main() {
-  databaseFactory = databaseFactoryFfi;
   runApp((SymptomTrackerApp()));
 }
 
@@ -52,7 +50,8 @@ String removeBacksLashes(String? raw) {
   return raw.replaceAll('\\', '').trim();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class _CalendarScreenState extends State<CalendarScreen>
+    with WidgetsBindingObserver {
   DateTime currentMonth = DateTime.now(); //asking the device the year and month
   Map<int, int> entriesPerDay = {};
   bool isReviewMode = false;
@@ -62,9 +61,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     loadEntries();
     loadReviewedDays();
     _syncToCurrentMonthIfNeeded();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncToCurrentMonthIfNeeded();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   //setting up automatic advance of the calendar.
@@ -166,6 +179,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           loadReviewedDays();
                         }
                       }),
+                  //this is the halfway point of document
                   //changed the Month and Year declaration to a clickable, this way the user can jump between months and years
                   //at a greater distance than one month at a time.
                   GestureDetector(
@@ -206,8 +220,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         entriesPerDay.clear();
                         reviewedDays.clear();
                         isReviewMode = false;
-                        loadEntries();
                       });
+                      loadEntries();
                     },
                   ),
                 ],
@@ -238,8 +252,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     isReviewMode = !isReviewMode;
                     if (isReviewMode) {
                       loadReviewedDays();
-                    } else if (!isReviewMode) {
-                      selectedDate = null;
                     } else {
                       reviewedDays.clear();
                     }
@@ -252,7 +264,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   elevation: isReviewMode ? 6 : 2,
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadiusGeometry.circular(10),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 child:
@@ -311,9 +323,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           }(), // <-- This was missing proper closure
                           builder: (context, snapshot) {
                             final distilledTime = snapshot.data ?? 0;
-                            final fatuige = entry['fatuigue'] == 1
-                                ? 'Fatiuged'
-                                : 'No Fatuige';
+                            final fatuige = entry['fatigue'] == 1
+                                ? 'Fatigued'
+                                : 'No Fatigue';
 
                             return Card(
                               margin: EdgeInsets.symmetric(

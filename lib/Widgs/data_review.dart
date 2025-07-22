@@ -1,4 +1,4 @@
-import 'package:melzers_symptom_tracker/services/database_helper.dart';
+import 'package:spooner/services/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 
 int monthNameToNumber(String monthName) {
@@ -23,14 +23,14 @@ Future<List<Map<String, dynamic>>> getEntriesForDate(
     {required int day, required int year, required String monthName}) async {
   final db = await DatabaseHelper.instance.database;
 
-  // final int month = monthNameToNumber(monthName);
-  // final String formattedDate =
-  //     '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+  final int month = monthNameToNumber(monthName);
+  final String formattedDate =
+      '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
 
   final results = await db.query(
     'entries',
     where: "strftime('%Y-%m-%d' , timestamp) =?",
-    whereArgs: ['2025-07-08'],
+    whereArgs: [formattedDate],
   );
   return results;
 }
@@ -58,9 +58,10 @@ Future<int> sleepMinder(Database db, Map<String, dynamic> entry) async {
     whereArgs: [date + '%'],
   );
   print('query result: $result');
-  // if (result.isEmpty) {
-  //   throw Exception('No sleep data found for timestamp: $timeStamp');
-  // }
+  if (result.isEmpty) {
+    print('No sleep data found for $date');
+    return 0;
+  }
   //extract values from dtabase
   int sleep = result[0]['sleep'] as int;
   int wake = result[0]['wake'] as int;

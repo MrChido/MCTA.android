@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:melzers_symptom_tracker/main.dart';
+import 'package:spooner/main.dart';
 import 'services/database_helper.dart';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EntryScreen extends StatefulWidget {
   final int day;
@@ -127,6 +128,36 @@ class _EntryScreenState extends State<EntryScreen> {
     }
 
     return "Invalid Format";
+  }
+
+//android conversion stoped here
+  Future<void> safeDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    prefs.setString('bsugars_draft', _bsugarsController.text);
+    prefs.setString('hHealth_draft', _hHealthController.text);
+    prefs.setString('weight_draft', _weightController.text);
+    prefs.setString('mnm_draft', _mnmController.text);
+    prefs.setString('activites_draft', _activitiesController.text);
+    prefs.setString('symptoms_draft', _symptomsController.text);
+    prefs.setString('wake_draft', _wakeTimeController.text);
+    prefs.setString('sleep_draft', _sleepTimeController.text);
+    prefs.setInt('severity_draft', severity);
+    prefs.setBool('fatigue_draft', fatigue);
+    prefs.setInt('water_draft', water);
+  }
+
+  @override
+  void dispose() {
+    _bsugarsController.dispose();
+    _mnmController.dispose();
+    _activitiesController.dispose();
+    _symptomsController.dispose();
+    _wakeTimeController.dispose();
+    _sleepTimeController.dispose();
+    _hHealthController.dispose();
+    _weightController.dispose();
+    super.dispose();
   }
 
   @override
@@ -312,6 +343,7 @@ class _EntryScreenState extends State<EntryScreen> {
                   widget.updateEntryCount(widget
                       .day); // Calls the function passed from CalendarScreen
                   print("About to pop back to main");
+                  FocusScope.of(context).unfocus();
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => CalendarScreen()),

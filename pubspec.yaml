@@ -1,4 +1,4 @@
-name: melzers_symptom_tracker
+name: spooner
 description: "This application is for the user to track, rate, quantify and document symptoms"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -35,7 +35,9 @@ dependencies:
   table_calendar: ^3.0.0
   intl: ^0.20.2
   permission_handler: ^11.0.0
-  #shared_prefrences: ^2.2.0
+  shared_preferences: ^2.2.2
+
+  path: ^1.8.3
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

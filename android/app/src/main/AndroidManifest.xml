@@ -5,7 +5,7 @@ package=".com.soggywombat.mellzers_symptom_tracker">
 android.maxSdkVerion="28"/>
 <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <application
-        android:label="Mellzer's Symptom Tracker"
+        android:label="Spooner"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
