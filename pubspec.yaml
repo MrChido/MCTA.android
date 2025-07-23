@@ -31,10 +31,10 @@ dependencies:
   flutter:
     sdk: flutter
   sqflite: ^2.3.0
-  path_provider: ^2.1.2
+  path_provider: ^2.0.12
   table_calendar: ^3.0.0
   intl: ^0.20.2
-  permission_handler: ^11.0.0
+  permission_handler: ^12.0.0
   shared_preferences: ^2.2.2
 
   path: ^1.8.3
