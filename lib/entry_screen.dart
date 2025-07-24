@@ -3,6 +3,7 @@ import 'package:spooner/main.dart';
 import 'services/database_helper.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import "Utilities/slumber_util.dart";
 
 class EntryScreen extends StatefulWidget {
   final int day;
@@ -145,6 +146,16 @@ class _EntryScreenState extends State<EntryScreen> {
     prefs.setInt('severity_draft', severity);
     prefs.setBool('fatigue_draft', fatigue);
     prefs.setInt('water_draft', water);
+  }
+
+  int getSleepTimeValue() {
+    final text = _sleepTimeController.text.trim();
+    return text.isEmpty ? -1 : parseCustomTimeFormat(text);
+  }
+
+  int getWakeTimeValue() {
+    final text = _wakeTimeController.text.trim();
+    return text.isEmpty ? -1 : parseCustomTimeFormat(text);
   }
 
   @override
@@ -290,6 +301,8 @@ class _EntryScreenState extends State<EntryScreen> {
               builder: (context) => ElevatedButton(
                 onPressed: () async {
                   print("Save button tapped.");
+                  final sleepTime = getSleepTimeValue();
+                  final wakeTime = getWakeTimeValue();
                   String bloodSugarInput =
                       _bsugarsController.text.trim(); //get user input
                   //int bloodSugarValue = int.tryParse(bloodSugarInput) ?? 0;
@@ -317,10 +330,6 @@ class _EntryScreenState extends State<EntryScreen> {
                   String mnmInput = jsonEncode(mnm);
                   String activitiesInput = jsonEncode(activities);
                   String symptomsInput = jsonEncode(symptoms);
-                  String wakeTimeMilitary =
-                      convertToMilitaryTime(_wakeTimeController.text);
-                  String sleepTimeMilitary =
-                      convertToMilitaryTime(_sleepTimeController.text);
                   double weight =
                       double.tryParse(_weightController.text) ?? 0.0;
 
@@ -332,8 +341,8 @@ class _EntryScreenState extends State<EntryScreen> {
                       mnmInput,
                       activitiesInput,
                       symptomsInput,
-                      int.parse(wakeTimeMilitary),
-                      int.parse(sleepTimeMilitary),
+                      wakeTime,
+                      sleepTime,
                       water.round(),
                       hHealth,
                       weight);

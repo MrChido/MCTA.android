@@ -10,6 +10,7 @@ import 'Widgs/calendar_widg.dart';
 //display the pertnent information in the correct spot
 import 'dart:convert';
 import 'Widgs/data_review.dart';
+import 'Utilities/slumber_util.dart';
 
 void main() {
   runApp((SymptomTrackerApp()));
@@ -302,6 +303,25 @@ class _CalendarScreenState extends State<CalendarScreen>
                         final timestamp = (entry['timestamp'] as String?) ?? '';
                         final day = entry['day'] ?? '?';
 
+                        //empty wake and sleep handler
+                        final distilledTime = snapshot.data ?? 0;
+                        final sleepRaw = entry['sleepTime'] ?? '';
+                        final wakeRaw = entry['wakeTime'] ?? '';
+
+                        final sleepTimeValue = parseCustomTimeFormat(sleepRaw);
+                        final wakeTimeValue = parseCustomTimeFormat(wakeRaw);
+                        final isValidSleep =
+                            sleepTimeValue != -1 && wakeTimeValue != -1;
+
+                        final sleepDisplay = isValidSleep
+                            ? "Hours slept: $distilledTime"
+                            : "Invalid sleep input - please fix";
+
+                        final cardColor =
+                            isValidSleep ? Colors.white : Colors.grey.shade300;
+                        final textColor =
+                            isValidSleep ? Colors.black : Colors.grey.shade600;
+
                         //the folowing changes the look of the JSON data to look mmore pleasing
                         final actList =
                             removeBacksLashes(entry['activities'] as String?);
@@ -322,7 +342,6 @@ class _CalendarScreenState extends State<CalendarScreen>
                             }
                           }(), // <-- This was missing proper closure
                           builder: (context, snapshot) {
-                            final distilledTime = snapshot.data ?? 0;
                             final fatuige = entry['fatigue'] == 1
                                 ? 'Fatigued'
                                 : 'No Fatigue';
@@ -330,16 +349,24 @@ class _CalendarScreenState extends State<CalendarScreen>
                             return Card(
                               margin: EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 8),
+                              color:
+                                  cardColor, // <-- changes background if sleep input is invalid
                               child: ListTile(
                                 title: Text(
-                                    "Day $day • ${timestamp.split('T')[0]}"),
+                                  "Day $day • ${timestamp.split('T')[0]}",
+                                  style: TextStyle(
+                                      color: textColor), // <-- title text color
+                                ),
                                 subtitle: Text(
                                   "$fatuige • Severity: ${entry['severity']}\n"
                                   "Weight: $weight lbs • Water Intake: ${entry['water'] ?? 'N/A'} oz\n"
-                                  "Hours slept: $distilledTime\n"
+                                  "$sleepDisplay\n"
                                   "Consumptions: $conList\n"
                                   "Activities: $actList\n"
                                   "Feelings and Symptoms: $fnsList",
+                                  style: TextStyle(
+                                      color:
+                                          textColor), // <-- subtitle text color
                                 ),
                               ),
                             );
