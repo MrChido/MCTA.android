@@ -315,7 +315,7 @@ class _CalendarScreenState extends State<CalendarScreen>
 
                         final sleepDisplay = isValidSleep
                             ? "Hours slept: $distilledTime"
-                            : "Invalid sleep input - please fix";
+                            : "Untracked";
 
                         final cardColor =
                             isValidSleep ? Colors.white : Colors.grey.shade300;

@@ -54,3 +54,5 @@ July 18 2025
 Made sure some of the back of the house codeing is complted, havent really modified the code for the app just yet. Implemented device file structure access for the app, will concider including an export feature while making android-oriented adjustments.
 July 22 2025
 Just got the coded portions of the app ready to be android device compatable. we will next be making it available for the field testers.
+July 25 2025
+Yesterday, I put the first build put onto the wife/clients phone and she immediately came across a behavioral issue that wasnt accounted for, the sleep/wake times were blocking database entries if they were left empty or null. It got handled with fallback values and a response for the cards last night and build 1.1.0+1 was generated to test that behavior resolution, upon reflection this morning, The card response needed to be adjusted to accomodate entries that could be placed when the sleep values are ignored, such as a mid-day entry. build 1.1.0+2
