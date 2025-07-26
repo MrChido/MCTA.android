@@ -1,0 +1,50 @@
+# Flutter/Dart/Pub related
+.dart_tool/
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+#IDEs and editors
+.idea/
+.vscode/
+*.iml
+
+#OS-specific files
+.DS_Store
+Thumbs.db
+
+#log and temp files
+*.tmp
+*.log
+
+#android
+android/.gradle/
+android/captures/
+android/key.properties
+*.jks
+**/GeneratedPluginRegistrant.java
+local.properties
+
+#ios/ macOS
+ios/Flutter/flutter.framework
+ios/flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/Flutter/flutter_export_environment.sh
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Pods/
+ios/.symlinks/
+ios/xcuserdata/
+macos/Flutter/ephemeral/
+
+#web
+lib/generated_plugin_registrant.dart
+
+#firebase and API keys
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
