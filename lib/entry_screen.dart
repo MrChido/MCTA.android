@@ -303,6 +303,8 @@ class _EntryScreenState extends State<EntryScreen> {
                   print("Save button tapped.");
                   final sleepTime = getSleepTimeValue();
                   final wakeTime = getWakeTimeValue();
+                  print(
+                      'Sleep time being saved to DB: $sleepTime'); // Debug print
                   String bloodSugarInput =
                       _bsugarsController.text.trim(); //get user input
                   //int bloodSugarValue = int.tryParse(bloodSugarInput) ?? 0;

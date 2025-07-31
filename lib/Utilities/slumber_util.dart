@@ -17,7 +17,7 @@ int parseCustomTimeFormat(String text) {
     if (meridian == 'PM' && hour < 12) hour += 12;
     if (meridian == 'AM' && hour == 12) hour = 0;
 
-    return hour * 60 + minute;
+    return hour * 100 + minute; // Convert to HHMM format
   } catch (_) {
     return -1;
   }

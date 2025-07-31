@@ -36,44 +36,9 @@ Future<List<Map<String, dynamic>>> getEntriesForDate(
 }
 
 //sleep hour tracker
-int toMinutes(int time) {
-  final hour =
-      time ~/ 100; //recieving the whole hours of a 24-hour based time stamp
-  final minute = time % 100; //recieving the minutes left over
-  return hour * 60 +
-      minute; //estbilishing the whole timestmp as minutes exclusively
-}
-
-Future<int> sleepMinder(Database db, Map<String, dynamic> entry) async {
-  print('sleepMinder invoked');
-  final rawTimestamp = entry['timestamp'];
-  final date = rawTimestamp.split('T')[0];
-  final result = await db.query(
-    'entries',
-    columns: [
-      'sleep',
-      'wake',
-    ],
-    where: 'timestamp LIKE ?',
-    whereArgs: [date + '%'],
-  );
-  print('query result: $result');
-  if (result.isEmpty) {
-    print('No sleep data found for $date');
-    return 0;
-  }
-  //extract values from dtabase
-  int sleep = result[0]['sleep'] as int;
-  int wake = result[0]['wake'] as int;
-  print(' sleep $sleep | wake: $wake');
-  int sleepMinutes = toMinutes(sleep);
-  int wakeMinutes = toMinutes(wake);
-  //caluculate the pure and distilled time
-  int pureTime = (wakeMinutes >= sleepMinutes)
-      ? wakeMinutes - sleepMinutes
-      : (1440 - sleepMinutes) + wakeMinutes;
-
-  int distilledTime = pureTime ~/ 60;
-  print('pureTime :$pureTime | distilledTime: $distilledTime');
-  return distilledTime;
-}
+// int toMinutes(int time) {
+//   final hour =
+//       time ~/ 100; //recieving the whole hours of a 24-hour based time stamp
+//   final minute = time % 100; //recieving the minutes left over
+//   return hour * 60 +
+//       minute; //estbilishing the whole timestmp as minutes exclusively
