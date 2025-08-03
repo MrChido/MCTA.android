@@ -311,9 +311,8 @@ class _CalendarScreenState extends State<CalendarScreen>
                 });
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: isReviewMode
-                    ? Color(0xFF4B0082)
-                    : Colors.grey[300],
+                backgroundColor:
+                    isReviewMode ? Color(0xFF4B0082) : Colors.grey[300],
                 foregroundColor: isReviewMode ? Colors.white : Colors.black,
                 elevation: isReviewMode ? 6 : 2,
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -356,7 +355,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                         builder: (context, setState) {
                           final weight =
                               (entry['weight'] as num?)?.toStringAsFixed(1) ??
-                              'N/A';
+                                  'N/A';
                           final timestamp =
                               (entry['timestamp'] as String?) ?? '';
                           final day = entry['day'] ?? '?';
@@ -370,17 +369,15 @@ class _CalendarScreenState extends State<CalendarScreen>
                           final fnsList = removeBacksLashes(
                             entry['symptoms'] as String?,
                           );
-                          final fatuige = entry['fatigue'] == 1
-                              ? 'Fatigued'
-                              : 'No Fatigue';
+                          final fatuige =
+                              entry['fatigue'] == 1 ? 'Fatigued' : 'No Fatigue';
 
                           String toReadableTime(int timeInHHMM) {
                             if (timeInHHMM == -1) return "No time set";
 
                             // Convert HHMM format to hours and minutes
                             final hour = timeInHHMM ~/ 100; // For 2200 -> 22
-                            final minute =
-                                timeInHHMM %
+                            final minute = timeInHHMM %
                                 100; // For 2200 -> 00                        // Validate the time
                             if (hour < 0 ||
                                 hour > 23 ||
@@ -394,21 +391,20 @@ class _CalendarScreenState extends State<CalendarScreen>
 
                             // Convert to 12-hour format
                             final hour12 = hour > 12
-                                ? hour -
-                                      12 // After 12 PM
+                                ? hour - 12 // After 12 PM
                                 : (hour == 0
-                                      ? 12 // Midnight (00:00)
-                                      : hour); // Morning hours or noon
+                                    ? 12 // Midnight (00:00)
+                                    : hour); // Morning hours or noon
 
                             return '${hour12.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $suffix';
                           }
 
                           final sleep =
                               int.tryParse(entry['sleep']?.toString() ?? '') ??
-                              -1;
+                                  -1;
                           final wake =
                               int.tryParse(entry['wake']?.toString() ?? '') ??
-                              -1;
+                                  -1;
 
                           String sleepReport = (sleep != -1 && wake != -1)
                               ? "Slept from ${toReadableTime(sleep)} to ${toReadableTime(wake)}"
@@ -473,9 +469,74 @@ class _CalendarScreenState extends State<CalendarScreen>
                                             Icons.delete,
                                             color: Colors.red,
                                           ),
-                                          onPressed: () {
-                                            // Handle delete action
-                                            print('Delete tapped for day $day');
+                                          onPressed: () async {
+                                            final timestamp =
+                                                entry['timestamp'] as String;
+
+                                            // Show confirmation dialog
+                                            final shouldDelete =
+                                                await showDialog<bool>(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: Text('Delete Entry'),
+                                                content: Text(
+                                                    'Are you sure you want to delete this entry?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, false),
+                                                    child: Text('Cancel'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, true),
+                                                    child: Text('Delete'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+
+                                            if (shouldDelete == true) {
+                                              // Delete from database
+                                              await DatabaseHelper()
+                                                  .deleteEntriesByTimestamp(
+                                                      timestamp);
+
+                                              // Call setState on the main screen state to trigger a rebuild
+                                              context
+                                                  .findAncestorStateOfType<
+                                                      _CalendarScreenState>()
+                                                  ?.setState(() {
+                                                // Refresh all the data
+                                                loadEntries();
+                                                loadPeriodDays();
+                                                if (isReviewMode) {
+                                                  loadReviewedDays();
+                                                }
+                                                // Force the entry list to refresh
+                                                selectedDate = DateTime(
+                                                  selectedDate!.year,
+                                                  selectedDate!.month,
+                                                  selectedDate!.day,
+                                                );
+                                              });
+
+                                              print(
+                                                  'Deleted entry with timestamp: $timestamp');
+
+                                              // Show success message
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                      'Entry deleted successfully'),
+                                                  duration:
+                                                      Duration(seconds: 2),
+                                                ),
+                                              );
+                                            }
                                           },
                                         ),
                                       ],

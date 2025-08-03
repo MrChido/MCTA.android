@@ -164,6 +164,16 @@ class DatabaseHelper {
       where: "timestamp LIKE ?",
       whereArgs: ["$formattedDate%"],
     );
+  } //Delete entries for a specific date
+
+  Future<void> deleteEntriesByTimestamp(String timestamp) async {
+    final db = await database;
+
+    await db.delete(
+      'entries',
+      where: "timestamp LIKE ?",
+      whereArgs: [timestamp],
+    );
   }
 
   Future<List<Map<String, dynamic>>> getEntriesForDay(int day) async {
