@@ -59,3 +59,7 @@ Yesterday, I put the first build put onto the wife/clients phone and she immedia
 July 26 2025
 Saw an issue with the sleep time fallback handler, and spent the good part of the day remedying the errant behavior, several measures had to take place but things got ironed out. build 1.1.1+1
 The function of evaluating the hours slept as a total length of time, was problematic so I have decided to just use the values inserted by the user. maybe at a later date i will return to the function. it took a moment but the new time format is good and understandable.
+August 2025
+Wife would like to see the ability to track periods, and edit/delete entries. I am going to get started with the period tracker, its already fleshed out in my mind.
+8/3/2025
+With the period marking feature completed, I have implemneted an enviroment where the snapshot card can be tapped and 2 options are present, to edit the entry or to delete it in the database. The next feature to be added is the latter, I am performing this addetion first because i think it would be the easiest to implement out of the two.

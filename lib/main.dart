@@ -57,6 +57,7 @@ class _CalendarScreenState extends State<CalendarScreen>
   bool isReviewMode = false;
   List<int> reviewedDays = [];
   DateTime? selectedDate;
+  Set<int> periodDays = {};
 
   @override
   void initState() {
@@ -65,6 +66,39 @@ class _CalendarScreenState extends State<CalendarScreen>
     loadEntries();
     loadReviewedDays();
     _syncToCurrentMonthIfNeeded();
+    loadPeriodDays();
+  }
+
+  void loadPeriodDays() async {
+    print("Loading period days for ${currentMonth.year}-${currentMonth.month}");
+    final dbHelper = DatabaseHelper();
+    final db = await dbHelper.database;
+
+    final String yearStr = currentMonth.year.toString();
+    final String monthStr = currentMonth.month.toString().padLeft(2, '0');
+
+    // First clear the existing period days
+    setState(() {
+      periodDays = {};
+    });
+
+    final result = await db.rawQuery(
+      '''SELECT day, timestamp FROM entries WHERE strftime('%Y', timestamp) = ? AND strftime('%m', timestamp) = ? AND mperiod = 1''',
+      [yearStr, monthStr],
+    );
+
+    print(
+      "Found ${result.length} period days for ${currentMonth.year}-${currentMonth.month}",
+    );
+
+    final newPeriodDays = result.map((row) => row['day'] as int).toSet();
+    print(
+      "Period days for ${currentMonth.year}-${currentMonth.month}: $newPeriodDays",
+    );
+
+    setState(() {
+      periodDays = newPeriodDays;
+    });
   }
 
   @override
@@ -89,6 +123,7 @@ class _CalendarScreenState extends State<CalendarScreen>
         entriesPerDay.clear();
         loadEntries();
         if (isReviewMode) loadReviewedDays();
+        loadPeriodDays(); // Refresh period days when month changes
       });
     }
   }
@@ -98,8 +133,10 @@ class _CalendarScreenState extends State<CalendarScreen>
     final int selectedYear = currentMonth.year;
     final int selectedMonth = currentMonth.month;
 
-    final entryDays =
-        await dbHelper.getDaysWithEntries(selectedYear, selectedMonth);
+    final entryDays = await dbHelper.getDaysWithEntries(
+      selectedYear,
+      selectedMonth,
+    );
     setState(() {
       reviewedDays = entryDays;
     });
@@ -120,7 +157,8 @@ class _CalendarScreenState extends State<CalendarScreen>
     final Map<int, int> tempMap = {};
     for (final row in result) {
       final ts = DateTime.parse(
-          row['timestamp'] as String); //defining the 'timestamp' as a string
+        row['timestamp'] as String,
+      ); //defining the 'timestamp' as a string
       final day = ts.day;
       tempMap[day] = (tempMap[day] ?? 0) + 1;
     }
@@ -139,16 +177,15 @@ class _CalendarScreenState extends State<CalendarScreen>
     final didAddEntry = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => EntryScreen(
-          day: day,
-          updateEntryCount: (d) => _onDayTapped(d),
-        ),
+        builder: (_) =>
+            EntryScreen(day: day, updateEntryCount: (d) => _onDayTapped(d)),
       ),
     );
     if (didAddEntry == true) {
       setState(() {
         entriesPerDay[day] = (entriesPerDay[day] ?? 0) + 1;
       });
+      loadPeriodDays(); // Refresh period days after new entry
     }
   }
 
@@ -164,21 +201,26 @@ class _CalendarScreenState extends State<CalendarScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                    icon: Icon(Icons.arrow_left),
-                    onPressed: () async {
-                      setState(() {
-                        currentMonth =
-                            DateTime(currentMonth.year, currentMonth.month - 1);
-                        entriesPerDay.clear();
-                        reviewedDays.clear();
-                        isReviewMode = false;
-                      });
-                      loadEntries();
+                  icon: Icon(Icons.arrow_left),
+                  onPressed: () async {
+                    setState(() {
+                      currentMonth = DateTime(
+                        currentMonth.year,
+                        currentMonth.month - 1,
+                      );
+                      entriesPerDay.clear();
+                      reviewedDays.clear();
+                      isReviewMode = false;
+                    });
+                    loadEntries();
+                    loadPeriodDays(); // Add this to match right arrow behavior
 
-                      if (isReviewMode) {
-                        loadReviewedDays();
-                      }
-                    }),
+                    if (isReviewMode) {
+                      loadReviewedDays();
+                    }
+                  },
+                ),
+
                 //this is the halfway point of document
                 //changed the Month and Year declaration to a clickable, this way the user can jump between months and years
                 //at a greater distance than one month at a time.
@@ -200,6 +242,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                         isReviewMode = false;
                       });
                       loadEntries();
+                      loadPeriodDays();
                     }
                   },
                   child: Text(
@@ -215,13 +258,16 @@ class _CalendarScreenState extends State<CalendarScreen>
                   icon: Icon(Icons.arrow_right),
                   onPressed: () async {
                     setState(() {
-                      currentMonth =
-                          DateTime(currentMonth.year, currentMonth.month + 1);
+                      currentMonth = DateTime(
+                        currentMonth.year,
+                        currentMonth.month + 1,
+                      );
                       entriesPerDay.clear();
                       reviewedDays.clear();
                       isReviewMode = false;
                     });
                     loadEntries();
+                    loadPeriodDays();
                   },
                 ),
               ],
@@ -229,14 +275,21 @@ class _CalendarScreenState extends State<CalendarScreen>
             SizedBox(height: 8),
             CalendarWidget(
               currentMonth: currentMonth,
-              firstWeekday:
-                  DateTime(currentMonth.year, currentMonth.month, 1).weekday,
-              daysInMonth:
-                  DateTime(currentMonth.year, currentMonth.month + 1, 0).day,
+              firstWeekday: DateTime(
+                currentMonth.year,
+                currentMonth.month,
+                1,
+              ).weekday,
+              daysInMonth: DateTime(
+                currentMonth.year,
+                currentMonth.month + 1,
+                0,
+              ).day,
               entriesPerDay: entriesPerDay,
               reviewedDays: reviewedDays,
               isReviewMode: isReviewMode,
               onDayTapped: _onDayTapped,
+              periodDays: periodDays,
             ),
             Padding(
               padding: EdgeInsets.symmetric(vertical: 10),
@@ -258,8 +311,9 @@ class _CalendarScreenState extends State<CalendarScreen>
                 });
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    isReviewMode ? Color(0xFF4B0082) : Colors.grey[300],
+                backgroundColor: isReviewMode
+                    ? Color(0xFF4B0082)
+                    : Colors.grey[300],
                 foregroundColor: isReviewMode ? Colors.white : Colors.black,
                 elevation: isReviewMode ? 6 : 2,
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -284,7 +338,8 @@ class _CalendarScreenState extends State<CalendarScreen>
                     return Padding(
                       padding: EdgeInsets.all(16),
                       child: Text(
-                          "No entries for ${DateFormat.yMMMM().format(currentMonth)}"),
+                        "No entries for ${DateFormat.yMMMM().format(currentMonth)}",
+                      ),
                     );
                   }
 
@@ -295,88 +350,142 @@ class _CalendarScreenState extends State<CalendarScreen>
                     itemCount: entries.length,
                     itemBuilder: (context, index) {
                       final entry = entries[index];
-                      final weight =
-                          (entry['weight'] as num?)?.toStringAsFixed(1) ??
+
+                      bool isExpanded = false;
+                      return StatefulBuilder(
+                        builder: (context, setState) {
+                          final weight =
+                              (entry['weight'] as num?)?.toStringAsFixed(1) ??
                               'N/A';
-                      final timestamp = (entry['timestamp'] as String?) ?? '';
-                      final day = entry['day'] ?? '?';
+                          final timestamp =
+                              (entry['timestamp'] as String?) ?? '';
+                          final day = entry['day'] ?? '?';
 
-                      //empty wake and sleep handler
+                          final actList = removeBacksLashes(
+                            entry['activities'] as String?,
+                          );
+                          final conList = removeBacksLashes(
+                            entry['mnm'] as String?,
+                          );
+                          final fnsList = removeBacksLashes(
+                            entry['symptoms'] as String?,
+                          );
+                          final fatuige = entry['fatigue'] == 1
+                              ? 'Fatigued'
+                              : 'No Fatigue';
 
-                      // final cardColor =
-                      //     isValidSleep ? Colors.white : Colors.grey.shade300;
-                      // final textColor =
-                      //     isValidSleep ? Colors.black : Colors.grey.shade600;
-                      //the folowing changes the look of the JSON data to look mmore pleasing
-                      final actList =
-                          removeBacksLashes(entry['activities'] as String?);
-                      final conList =
-                          removeBacksLashes(entry['mnm'] as String?);
-                      final fnsList =
-                          removeBacksLashes(entry['symptoms'] as String?);
-                      final fatuige =
-                          entry['fatigue'] == 1 ? 'Fatigued' : 'No Fatigue';
-                      String toReadableTime(int timeInHHMM) {
-                        if (timeInHHMM == -1) return "No time set";
+                          String toReadableTime(int timeInHHMM) {
+                            if (timeInHHMM == -1) return "No time set";
 
-                        // Convert HHMM format to hours and minutes
-                        final hour = timeInHHMM ~/ 100; // For 2200 -> 22
-                        final minute = timeInHHMM %
-                            100; // For 2200 -> 00                        // Validate the time
-                        if (hour < 0 ||
-                            hour > 23 ||
-                            minute < 0 ||
-                            minute > 59) {
-                          return "Invalid time";
-                        }
+                            // Convert HHMM format to hours and minutes
+                            final hour = timeInHHMM ~/ 100; // For 2200 -> 22
+                            final minute =
+                                timeInHHMM %
+                                100; // For 2200 -> 00                        // Validate the time
+                            if (hour < 0 ||
+                                hour > 23 ||
+                                minute < 0 ||
+                                minute > 59) {
+                              return "Invalid time";
+                            }
 
-                        // Determine AM/PM
-                        final suffix = hour >= 12 ? 'PM' : 'AM';
+                            // Determine AM/PM
+                            final suffix = hour >= 12 ? 'PM' : 'AM';
 
-                        // Convert to 12-hour format
-                        final hour12 = hour > 12
-                            ? hour - 12 // After 12 PM
-                            : (hour == 0
-                                ? 12 // Midnight (00:00)
-                                : hour); // Morning hours or noon
+                            // Convert to 12-hour format
+                            final hour12 = hour > 12
+                                ? hour -
+                                      12 // After 12 PM
+                                : (hour == 0
+                                      ? 12 // Midnight (00:00)
+                                      : hour); // Morning hours or noon
 
-                        return '${hour12.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $suffix';
-                      }
+                            return '${hour12.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $suffix';
+                          }
 
-                      final sleep =
-                          int.tryParse(entry['sleep']?.toString() ?? '') ?? -1;
-                      final wake =
-                          int.tryParse(entry['wake']?.toString() ?? '') ?? -1;
-                      print(
-                          'Value from DB - sleep: ${entry['sleep']}, parsed to: $sleep'); // Debug print
+                          final sleep =
+                              int.tryParse(entry['sleep']?.toString() ?? '') ??
+                              -1;
+                          final wake =
+                              int.tryParse(entry['wake']?.toString() ?? '') ??
+                              -1;
 
-                      String sleepReport = (sleep != -1 && wake != -1)
-                          ? "Slept from ${toReadableTime(sleep)} to ${toReadableTime(wake)}"
-                          : "Sleep data Unavailable";
+                          String sleepReport = (sleep != -1 && wake != -1)
+                              ? "Slept from ${toReadableTime(sleep)} to ${toReadableTime(wake)}"
+                              : "Sleep data Unavailable";
 
-                      return Card(
-                        margin:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        // color:
-                        //     cardColor, // <-- changes background if sleep input is invalid
-                        child: ListTile(
-                          title: Text(
-                            "Day $day • ${timestamp.split('T')[0]}",
-                            // style: TextStyle(
-                            //     color: textColor), // <-- title text color
-                          ),
-                          subtitle: Text(
-                            "$fatuige • Severity: ${entry['severity']}\n"
-                            "Weight: $weight lbs • Water Intake: ${entry['water'] ?? 'N/A'} oz\n"
-                            "$sleepReport\n"
-                            "Consumptions: $conList\n"
-                            "Activities: $actList\n"
-                            "Feelings and Symptoms: $fnsList",
-                            // style: TextStyle(
-                            //     color:
-                            //         textColor), // <-- subtitle text color
-                          ),
-                        ),
+                          return GestureDetector(
+                            onTap: () =>
+                                setState(() => isExpanded = !isExpanded),
+                            child: AnimatedContainer(
+                              duration: Duration(milliseconds: 300),
+                              margin: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Day $day • ${timestamp.split('T')[0]}",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    "$fatuige • Severity: ${entry['severity']}\n"
+                                    "Weight: $weight lbs • Water Intake: ${entry['water'] ?? 'N/A'} oz\n"
+                                    "$sleepReport\n"
+                                    "Consumptions: $conList\n"
+                                    "Activities: $actList\n"
+                                    "Feelings and Symptoms: $fnsList",
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                  if (isExpanded) ...[
+                                    Divider(height: 20),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.edit,
+                                            color: Colors.blue,
+                                          ),
+                                          onPressed: () {
+                                            // Handle edit action
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                          ),
+                                          onPressed: () {
+                                            // Handle delete action
+                                            print('Delete tapped for day $day');
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       );
                     },
                   );

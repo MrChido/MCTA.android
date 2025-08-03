@@ -26,6 +26,20 @@ Color getColor(
   }
 }
 
+BoxDecoration getMulberryRingDeco(bool isPeriodDay) {
+  return isPeriodDay
+      ? BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isPeriodDay
+                ? Color.fromARGB(255, 198, 67, 164)
+                : Colors.transparent,
+            width: 5.0,
+          ),
+        )
+      : BoxDecoration();
+}
+
 double getFlameSize(int entryCount) {
   if (entryCount < 10) {
     return 0; //remains hidden for the sake of the icon size at the begining.

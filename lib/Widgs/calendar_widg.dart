@@ -9,6 +9,7 @@ class CalendarWidget extends StatelessWidget {
   final List<int> reviewedDays;
   final bool isReviewMode;
   final ValueChanged<int> onDayTapped;
+  final Set<int> periodDays;
 
   const CalendarWidget({
     super.key,
@@ -19,6 +20,7 @@ class CalendarWidget extends StatelessWidget {
     required this.reviewedDays,
     required this.isReviewMode,
     required this.onDayTapped,
+    required this.periodDays,
   });
 
   @override
@@ -72,6 +74,12 @@ class CalendarWidget extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: bgColor,
                         shape: BoxShape.circle,
+                        border: periodDays.contains(day)
+                            ? Border.all(
+                                color: Color.fromARGB(255, 198, 67, 164),
+                                width: 5,
+                              )
+                            : null,
                       ),
                       child: Center(
                         //This is the controll for the day being at its most extreme point

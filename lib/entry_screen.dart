@@ -108,6 +108,7 @@ class _EntryScreenState extends State<EntryScreen> {
   int water = 0;
   final TextEditingController _hHealthController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
+  bool mperiod = false;
 
   String convertToMilitaryTime(String timeInput) {
     timeInput = timeInput.trim().toLowerCase(); //normalize the case usage
@@ -146,6 +147,7 @@ class _EntryScreenState extends State<EntryScreen> {
     prefs.setInt('severity_draft', severity);
     prefs.setBool('fatigue_draft', fatigue);
     prefs.setInt('water_draft', water);
+    prefs.setBool('mperiod_draft', mperiod);
   }
 
   int getSleepTimeValue() {
@@ -174,7 +176,7 @@ class _EntryScreenState extends State<EntryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Please fill the fields')),
+      appBar: AppBar(title: Text('Please fill all the fields')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
@@ -189,7 +191,15 @@ class _EntryScreenState extends State<EntryScreen> {
                 });
               },
             ),
-
+            SwitchListTile(
+              title: Text('Menstrual Period'),
+              value: mperiod,
+              onChanged: (bool newValue) {
+                setState(() {
+                  mperiod = newValue;
+                });
+              },
+            ),
             Text('Pain Severity:'),
             SliderTheme(
               data: SliderTheme.of(context).copyWith(
@@ -209,6 +219,7 @@ class _EntryScreenState extends State<EntryScreen> {
                 },
               ),
             ),
+            Text('Sleep Cycle:'),
             Text('Bed Time:'),
             TextField(
                 controller: _sleepTimeController,
@@ -223,7 +234,7 @@ class _EntryScreenState extends State<EntryScreen> {
                 decoration: InputDecoration(
                     hintText: '7.00AM',
                     hintStyle: TextStyle(color: Colors.grey))),
-
+            Text('Physical Health:'),
             Text('Blood Sugar:'),
             TextField(
                 controller: _bsugarsController,
@@ -247,6 +258,7 @@ class _EntryScreenState extends State<EntryScreen> {
                   hintText: "Please Enter your Weight(Lb)",
                   hintStyle: TextStyle(color: Colors.grey)),
             ),
+            Text('Consumptions:'),
             Text('Meals/Medications:'),
             TextField(
               controller: _mnmController,
@@ -255,7 +267,7 @@ class _EntryScreenState extends State<EntryScreen> {
                   hintText: "separate by commas",
                   hintStyle: TextStyle(color: Colors.grey)),
             ),
-            Text('water consumed (oz):'),
+            Text('water (oz):'),
             SliderTheme(
               data: SliderTheme.of(context).copyWith(
                 thumbShape: _WaterDropThumb(),
@@ -277,7 +289,7 @@ class _EntryScreenState extends State<EntryScreen> {
                 },
               ),
             ),
-
+            Text('Internal & External factors:'),
             Text('Activities:'),
             TextField(
               controller: _activitiesController,
@@ -335,8 +347,20 @@ class _EntryScreenState extends State<EntryScreen> {
                   double weight =
                       double.tryParse(_weightController.text) ?? 0.0;
 
+                  final now = DateTime.now();
+                  // Create a DateTime that combines the selected date with the current time
+                  final selectedDateTime = DateTime(
+                    now.year,
+                    now.month,
+                    widget.day,
+                    now.hour,
+                    now.minute,
+                    now.second,
+                  );
+                  print(
+                      "Saving entry with timestamp for selected date (day ${widget.day})");
                   await DatabaseHelper().insertEntry(
-                      widget.day,
+                      widget.day, // Use the selected day for saving
                       severity.round(),
                       fatigue,
                       bloodSugarInput,
@@ -347,7 +371,8 @@ class _EntryScreenState extends State<EntryScreen> {
                       sleepTime,
                       water.round(),
                       hHealth,
-                      weight);
+                      weight,
+                      mperiod);
                   print("mnm before inserting: $mnmInput");
                   print("activities before inserting: $activitiesInput");
 

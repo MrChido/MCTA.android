@@ -16,6 +16,22 @@ class DatabaseHelper {
     return _database!;
   }
 
+  Future<Set<int>> getPeriodDays(DateTime month) async {
+    final db = await database;
+    final String yearStr = month.year.toString();
+    final String monthStr = month.month.toString().padLeft(2, '0');
+
+    // Query using the timestamp for entries, ensuring we only get entries from the exact month and year
+    final List<Map<String, dynamic>> result = await db.rawQuery(
+        '''SELECT DISTINCT CAST(strftime('%d', timestamp) AS INTEGER) as day
+           FROM entries 
+           WHERE strftime('%Y', timestamp) = ? 
+           AND strftime('%m', timestamp) = ?
+           AND mperiod = 1''', [yearStr, monthStr]);
+
+    return result.map((row) => row['day'] as int).toSet();
+  }
+
   Future<List<int>> getDaysWithEntries(int year, month) async {
     final db = await database;
     //formating month to two digits for SQLite compatability
@@ -52,7 +68,8 @@ class DatabaseHelper {
             sleep INTEGER,
             water INTEGER,
             hHealth TEXT,
-            weight REAL 
+            weight REAL,
+            mperiod INTEGER DEFAULT 0
           )
         ''');
       },
@@ -78,9 +95,15 @@ class DatabaseHelper {
     int water,
     String hHealth,
     double weight,
+    bool mperiod,
   ) async {
     final db = await database;
     String mnmInput = mnm.isNotEmpty ? jsonEncode(mnm) : '[]';
+    // Create timestamp with current date and selected day
+    final currentTime = DateTime.now();
+    final timestamp = DateTime(currentTime.year, currentTime.month, day,
+            currentTime.hour, currentTime.minute, currentTime.second)
+        .toIso8601String();
     String activitiesInput =
         activities.isNotEmpty ? jsonEncode(activities) : '[]';
     String symptomsInput = symptoms.isNotEmpty ? jsonEncode(symptoms) : '[]';
@@ -90,12 +113,13 @@ class DatabaseHelper {
     await db.insert(
       'entries',
       {
-        'day': day,
+        'day':
+            day, // This field is now redundant but kept for backward compatibility
         'severity': severity,
         'fatigue': fatigue ? 1 : 0,
         'wake': wake,
         'sleep': sleep,
-        'timestamp': DateTime.now().toIso8601String(),
+        'timestamp': timestamp, // Using our properly constructed timestamp
         'BSugars': sugars,
         'mnm': mnmInput,
         'activities': activitiesInput,
@@ -103,6 +127,7 @@ class DatabaseHelper {
         'water': water,
         'hHealth': hHealth,
         'weight': weight,
+        'mperiod': mperiod,
       },
     );
     print("Inserted entry: ${await db.query('entries')}"); //verify sugars
@@ -113,8 +138,7 @@ class DatabaseHelper {
   Future<int> getEntryCountForDay(int day) async {
     final db = await database;
     List<Map<String, dynamic>> result =
-        await db.query('entries', where: 'day =?', whereArgs: [day]);
-
+        await db.query('entries', where: 'day = ?', whereArgs: [day]);
     return result.length;
   }
 
@@ -145,7 +169,7 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getEntriesForDay(int day) async {
     final db = await database;
     List<Map<String, dynamic>> result =
-        await db.query('entries', where: 'day =?', whereArgs: [day]);
+        await db.query('entries', where: 'day = ?', whereArgs: [day]);
 
     return result.map((entry) {
       entry['mnm'] = entry['mnm'] != null ? jsonDecode(entry['mnm']) : [];
