@@ -62,4 +62,15 @@ The function of evaluating the hours slept as a total length of time, was proble
 August 2025
 Wife would like to see the ability to track periods, and edit/delete entries. I am going to get started with the period tracker, its already fleshed out in my mind.
 8/3/2025
-With the period marking feature completed, I have implemneted an enviroment where the snapshot card can be tapped and 2 options are present, to edit the entry or to delete it in the database. The next feature to be added is the latter, I am performing this addetion first because i think it would be the easiest to implement out of the two.
+With the period marking feature completed, I have implemneted an enviroment where the snapshot card can be tapped and 2 options are present, to edit the entry or to delete it in the database. The next feature to be added is the latter, I am performing this addetion first because i think it would be the easiest to implement out of the two.|
+8/11/2025
+With the inclusion of being able to delete entries in the app, something has broken with the app when used by the wifes phone. The app is not saving entries into the databse, this is only isolated to her phone however. It behaves properly in my phone, and two emulated phone eniroments, one being her phone runing android 14.
+
+
+
+
+
+
+
+Desires from the wife:
+A place for medications list, something like a tab.
