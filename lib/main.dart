@@ -9,7 +9,7 @@ import 'Widgs/calendar_widg.dart';
 //This allows main.dart to access information found in the data_review document to
 //display the pertnent information in the correct spot
 import 'dart:convert';
-//import 'Utilities/slumber_util.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp((SymptomTrackerApp()));
@@ -58,6 +58,28 @@ class _CalendarScreenState extends State<CalendarScreen>
   List<int> reviewedDays = [];
   DateTime? selectedDate;
   Set<int> periodDays = {};
+  //medications card
+  List<String> medications = [];
+  bool isExpanded = false;
+  bool isEditing = false; // Track if the user is editing the medication field
+  late TextEditingController medicationController;
+  final String medicationKey = 'medications';
+
+  String toReadableTime(int timeInHHMM) {
+    if (timeInHHMM == -1) return "No time set";
+
+    final hour = timeInHHMM ~/ 100;
+    final minute = timeInHHMM % 100;
+
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      return "Invalid time";
+    }
+
+    final suffix = hour >= 12 ? 'PM' : 'AM';
+    final hour12 = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+
+    return '${hour12.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $suffix';
+  }
 
   @override
   void initState() {
@@ -67,6 +89,22 @@ class _CalendarScreenState extends State<CalendarScreen>
     loadReviewedDays();
     _syncToCurrentMonthIfNeeded();
     loadPeriodDays();
+    medicationController = TextEditingController();
+    _loadMedications(); // Load saved medications on startup
+  }
+
+//saving daily medication so that we can observe it later
+  Future<void> _loadMedications() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedList = prefs.getStringList(medicationKey);
+    setState(() {
+      medications = savedList ?? [""]; //starts with an empty option
+    });
+  }
+
+  Future<void> _saveMedications() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(medicationKey, medications);
   }
 
   void loadPeriodDays() async {
@@ -111,6 +149,7 @@ class _CalendarScreenState extends State<CalendarScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    medicationController.dispose(); // Dispose the controller to free resources
     super.dispose();
   }
 
@@ -187,6 +226,17 @@ class _CalendarScreenState extends State<CalendarScreen>
       });
       loadPeriodDays(); // Refresh period days after new entry
     }
+  }
+
+  Future<void> saveMedications(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('medications', value);
+  }
+
+  Future<void> loadMedications() async {
+    final prefs = await SharedPreferences.getInstance();
+    medicationController.text =
+        prefs.getString('medications') ?? "Daily Medications:";
   }
 
   @override // this is what the user opens up to
@@ -299,6 +349,91 @@ class _CalendarScreenState extends State<CalendarScreen>
                 style: TextStyle(fontSize: 16),
               ),
             ),
+            // Medications Card
+            InkWell(
+              autofocus: true,
+              onTap: () {
+                setState(() {
+                  isExpanded = !isExpanded;
+                });
+              },
+              child: Card(
+                margin: EdgeInsets.all(8),
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Daily Information",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 8),
+                      isEditing
+                          ? Column(
+                              children:
+                                  List.generate(medications.length, (index) {
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
+                                  child: TextFormField(
+                                    initialValue: medications[index],
+                                    onChanged: (value) {
+                                      medications[index] = value;
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: "Item ${index + 1}",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: medications
+                                  .map((med) => Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 2),
+                                        child: Text(med),
+                                      ))
+                                  .toList(),
+                            ),
+                      if (isExpanded) ...[
+                        Divider(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (isEditing)
+                              IconButton(
+                                icon: Icon(Icons.add, color: Colors.green),
+                                onPressed: () {
+                                  setState(() {
+                                    medications.add("");
+                                  });
+                                },
+                              ),
+                            IconButton(
+                              icon: Icon(isEditing ? Icons.check : Icons.edit,
+                                  color: Colors.blue),
+                              onPressed: () {
+                                setState(() {
+                                  isEditing = !isEditing;
+                                  if (!isEditing) _saveMedications();
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
                 setState(() {
@@ -441,107 +576,152 @@ class _CalendarScreenState extends State<CalendarScreen>
                                     ),
                                   ),
                                   SizedBox(height: 4),
-                                  Text(
-                                    "$fatuige • Severity: ${entry['severity']}\n"
-                                    "Weight: $weight lbs • Water Intake: ${entry['water'] ?? 'N/A'} oz\n"
-                                    "$sleepReport\n"
-                                    "Consumptions: $conList\n"
-                                    "Activities: $actList\n"
-                                    "Feelings and Symptoms: $fnsList",
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                  if (isExpanded) ...[
-                                    Divider(height: 20),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(
-                                            Icons.edit,
-                                            color: Colors.blue,
+                                  GestureDetector(
+                                    onTap: () => setState(
+                                        () => isExpanded = !isExpanded),
+                                    child: AnimatedContainer(
+                                      duration: Duration(milliseconds: 300),
+                                      margin: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      padding: EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black12,
+                                            blurRadius: 6,
                                           ),
-                                          onPressed: () {
-                                            // Handle edit action
-                                          },
-                                        ),
-                                        IconButton(
-                                          icon: Icon(
-                                            Icons.delete,
-                                            color: Colors.red,
+                                        ],
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Day $day • ${timestamp.split('T')[0]}",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                          onPressed: () async {
-                                            final timestamp =
-                                                entry['timestamp'] as String;
-
-                                            // Show confirmation dialog
-                                            final shouldDelete =
-                                                await showDialog<bool>(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: Text('Delete Entry'),
-                                                content: Text(
-                                                    'Are you sure you want to delete this entry?'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.pop(
-                                                            context, false),
-                                                    child: Text('Cancel'),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            "$fatuige • Severity: ${entry['severity']}\n"
+                                            "Weight: $weight lbs • Water Intake: ${entry['water'] ?? 'N/A'} oz\n"
+                                            "$sleepReport\n"
+                                            "Consumptions: $conList\n"
+                                            "Activities: $actList\n"
+                                            "Feelings and Symptoms: $fnsList",
+                                            style: TextStyle(fontSize: 14),
+                                          ),
+                                          if (isExpanded) ...[
+                                            Divider(height: 20),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                IconButton(
+                                                  icon: Icon(
+                                                    Icons.edit,
+                                                    color: Colors.blue,
                                                   ),
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.pop(
-                                                            context, true),
-                                                    child: Text('Delete'),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-
-                                            if (shouldDelete == true) {
-                                              // Delete from database
-                                              await DatabaseHelper()
-                                                  .deleteEntriesByTimestamp(
-                                                      timestamp);
-
-                                              // Call setState on the main screen state to trigger a rebuild
-                                              context
-                                                  .findAncestorStateOfType<
-                                                      _CalendarScreenState>()
-                                                  ?.setState(() {
-                                                // Refresh all the data
-                                                loadEntries();
-                                                loadPeriodDays();
-                                                if (isReviewMode) {
-                                                  loadReviewedDays();
-                                                }
-                                                // Force the entry list to refresh
-                                                selectedDate = DateTime(
-                                                  selectedDate!.year,
-                                                  selectedDate!.month,
-                                                  selectedDate!.day,
-                                                );
-                                              });
-
-                                              print(
-                                                  'Deleted entry with timestamp: $timestamp');
-
-                                              // Show success message
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                      'Entry deleted successfully'),
-                                                  duration:
-                                                      Duration(seconds: 2),
+                                                  onPressed: () {
+                                                    // Handle edit action
+                                                  },
                                                 ),
-                                              );
-                                            }
-                                          },
-                                        ),
-                                      ],
+                                                IconButton(
+                                                  icon: Icon(
+                                                    Icons.delete,
+                                                    color: Colors.red,
+                                                  ),
+                                                  onPressed: () async {
+                                                    final timestamp =
+                                                        entry['timestamp']
+                                                            as String;
+
+                                                    // Show confirmation dialog
+                                                    final shouldDelete =
+                                                        await showDialog<bool>(
+                                                      context: context,
+                                                      builder: (context) =>
+                                                          AlertDialog(
+                                                        title: Text(
+                                                            'Delete Entry'),
+                                                        content: Text(
+                                                            'Are you sure you want to delete this entry?'),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                    context,
+                                                                    false),
+                                                            child:
+                                                                Text('Cancel'),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                    context,
+                                                                    true),
+                                                            child:
+                                                                Text('Delete'),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+
+                                                    if (shouldDelete == true) {
+                                                      // Delete from database
+                                                      await DatabaseHelper()
+                                                          .deleteEntriesByTimestamp(
+                                                              timestamp);
+
+                                                      // Call setState on the main screen state to trigger a rebuild
+                                                      context
+                                                          .findAncestorStateOfType<
+                                                              _CalendarScreenState>()
+                                                          ?.setState(() {
+                                                        // Refresh all the data
+                                                        loadEntries();
+                                                        loadPeriodDays();
+                                                        if (isReviewMode) {
+                                                          loadReviewedDays();
+                                                        }
+                                                        // Force the entry list to refresh
+                                                        selectedDate = DateTime(
+                                                          selectedDate!.year,
+                                                          selectedDate!.month,
+                                                          selectedDate!.day,
+                                                        );
+                                                      });
+
+                                                      print(
+                                                          'Deleted entry with timestamp: $timestamp');
+
+                                                      // Show success message
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                              'Entry deleted successfully'),
+                                                          duration: Duration(
+                                                              seconds: 2),
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ],
+                                      ),
                                     ),
-                                  ],
+                                  ),
                                 ],
                               ),
                             ),

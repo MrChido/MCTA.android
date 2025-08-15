@@ -65,7 +65,8 @@ Wife would like to see the ability to track periods, and edit/delete entries. I 
 With the period marking feature completed, I have implemneted an enviroment where the snapshot card can be tapped and 2 options are present, to edit the entry or to delete it in the database. The next feature to be added is the latter, I am performing this addetion first because i think it would be the easiest to implement out of the two.|
 8/11/2025
 With the inclusion of being able to delete entries in the app, something has broken with the app when used by the wifes phone. The app is not saving entries into the databse, this is only isolated to her phone however. It behaves properly in my phone, and two emulated phone eniroments, one being her phone runing android 14.
-
+8/15/2025
+Included a card where a user can input and store daily infomration, they should persist till they are replaced with other information. I did not include a way to clear the line as i do not want the app to block the user from adding values or encounter an automatic deletion issue.
 
 
 
