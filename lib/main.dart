@@ -58,6 +58,7 @@ class _CalendarScreenState extends State<CalendarScreen>
   List<int> reviewedDays = [];
   DateTime? selectedDate;
   Set<int> periodDays = {};
+  int spoonCount = 0; // Define and initialize spoonCount
   //medications card
   List<String> medications = [];
   bool isExpanded = false;
@@ -344,7 +345,7 @@ class _CalendarScreenState extends State<CalendarScreen>
             Padding(
               padding: EdgeInsets.symmetric(vertical: 10),
               child: Text(
-                'Tap a day to log symptoms',
+                'Please select the day to make an entry',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16),
               ),
@@ -610,6 +611,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                                           SizedBox(height: 4),
                                           Text(
                                             "$fatuige • Severity: ${entry['severity']}\n"
+                                            "Current Number of Spoons: $spoonCount\n"
                                             "Weight: $weight lbs • Water Intake: ${entry['water'] ?? 'N/A'} oz\n"
                                             "$sleepReport\n"
                                             "Consumptions: $conList\n"
@@ -623,15 +625,27 @@ class _CalendarScreenState extends State<CalendarScreen>
                                               mainAxisAlignment:
                                                   MainAxisAlignment.end,
                                               children: [
-                                                IconButton(
-                                                  icon: Icon(
-                                                    Icons.edit,
-                                                    color: Colors.blue,
-                                                  ),
-                                                  onPressed: () {
-                                                    // Handle edit action
-                                                  },
-                                                ),
+                                                // IconButton(
+                                                //   icon: Icon(
+                                                //     Icons.edit,
+                                                //     color: Colors.blue,
+                                                //   ),
+                                                //   onPressed: () {
+                                                //     Navigator.push(
+                                                //       context,
+                                                //       MaterialPageRoute(
+                                                //         builder: (context) =>
+                                                //             EntryScreen(
+                                                //           day: widget.day,
+                                                //           updateEntryCount: widget
+                                                //               .updateEntryCount,
+                                                //           existingEntry: entry,
+                                                //           isEditing: true,
+                                                //         ),
+                                                //       ),
+                                                //     );
+                                                //   },
+                                                // ),
                                                 IconButton(
                                                   icon: Icon(
                                                     Icons.delete,

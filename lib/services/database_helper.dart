@@ -140,7 +140,8 @@ class DatabaseHelper {
             water INTEGER,
             hHealth TEXT,
             weight REAL,
-            mperiod INTEGER DEFAULT 0
+            mperiod INTEGER DEFAULT 0,
+            spoonCount INTEGER
           )
         ''');
           print("Database created successfully");
@@ -179,6 +180,7 @@ class DatabaseHelper {
     String hHealth,
     double weight,
     bool mperiod,
+    int spoonCount,
   ) async {
     try {
       await _logError("Starting insert operation");
@@ -228,7 +230,8 @@ class DatabaseHelper {
         'water': water,
         'hHealth': hHealth,
         'weight': weight,
-        'mperiod': mperiod ? 1 : 0, // Convert boolean to integer
+        'mperiod': mperiod ? 1 : 0, // Convert boolean t integer
+        'spoonCount': spoonCount
       };
 
       print("Attempting to insert entry with data: $entry");

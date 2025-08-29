@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:spoonie/main.dart';
+import 'package:flutter/services.dart';
+import 'dart:ui' as ui;
+import 'main.dart';
 import 'services/database_helper.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,7 +10,13 @@ import "Utilities/slumber_util.dart";
 class EntryScreen extends StatefulWidget {
   final int day;
   final Function(int) updateEntryCount;
-  const EntryScreen({required this.day, required this.updateEntryCount});
+  //final MedicationEntry ? existingEntry;
+  //final bool isEditing;
+  const EntryScreen({
+    super.key,
+    required this.day,
+    required this.updateEntryCount,
+  });
 
   @override
   _EntryScreenState createState() => _EntryScreenState();
@@ -35,7 +43,6 @@ class _BoltThumb extends SliderComponentShape {
   }) {
     final canvas = context.canvas;
     const iconSize = 24.0;
-
     final iconPainter = TextPainter(
       text: TextSpan(
         text: String.fromCharCode(Icons.bolt.codePoint),
@@ -51,6 +58,54 @@ class _BoltThumb extends SliderComponentShape {
 
     iconPainter.layout();
     iconPainter.paint(canvas, center - Offset(iconSize / 2, iconSize / 2));
+  }
+}
+
+class _SpoonThumb extends SliderComponentShape {
+  static ui.Image? _spoonImage;
+
+  _SpoonThumb() {
+    _loadSpoonImage();
+  }
+
+  Future<void> _loadSpoonImage() async {
+    if (_spoonImage == null) {
+      // Load the image from assets
+      ByteData data = await rootBundle.load('lib/assets/spoon24.png');
+      Uint8List bytes = data.buffer.asUint8List();
+      _spoonImage = await decodeImageFromList(bytes);
+    }
+  }
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => Size(30, 30);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    final canvas = context.canvas;
+    const iconSize = 24.0;
+
+    if (_spoonImage != null) {
+      // Draw the spoon image at the exact same position as the previous icon
+      canvas.drawImage(
+        _spoonImage!,
+        center - Offset(iconSize / 2, iconSize / 2),
+        Paint(),
+      );
+    }
   }
 }
 
@@ -95,6 +150,13 @@ class _WaterDropThumb extends SliderComponentShape {
 }
 
 class _EntryScreenState extends State<EntryScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Preload the spoon image
+    _SpoonThumb()._loadSpoonImage();
+  }
+
   bool fatigue = false;
   int severity = 4;
   final TextEditingController _bsugarsController = TextEditingController();
@@ -109,6 +171,7 @@ class _EntryScreenState extends State<EntryScreen> {
   final TextEditingController _hHealthController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
   bool mperiod = false;
+  int spoonCount = 0;
 
   String convertToMilitaryTime(String timeInput) {
     timeInput = timeInput.trim().toLowerCase(); //normalize the case usage
@@ -148,6 +211,7 @@ class _EntryScreenState extends State<EntryScreen> {
     prefs.setBool('fatigue_draft', fatigue);
     prefs.setInt('water_draft', water);
     prefs.setBool('mperiod_draft', mperiod);
+    prefs.setInt('spoonCount_draft', spoonCount);
   }
 
   int getSleepTimeValue() {
@@ -181,7 +245,10 @@ class _EntryScreenState extends State<EntryScreen> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            Text('Toggle Symptoms:'),
+            Text(
+              'Physical Condition:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             SwitchListTile(
               title: Text('Fatigue'),
               value: fatigue,
@@ -219,28 +286,32 @@ class _EntryScreenState extends State<EntryScreen> {
                 },
               ),
             ),
-            Text('Sleep Cycle:'),
-            Text('Bed Time:'),
-            TextField(
-                controller: _sleepTimeController,
-                style: TextStyle(color: Colors.black),
-                decoration: InputDecoration(
-                    hintText: '10.00PM',
-                    hintStyle: TextStyle(color: Colors.grey))),
-            Text('Woke up at:'),
-            TextField(
-                controller: _wakeTimeController,
-                style: TextStyle(color: Colors.black),
-                decoration: InputDecoration(
-                    hintText: '7.00AM',
-                    hintStyle: TextStyle(color: Colors.grey))),
-            Text('Physical Health:'),
+            Text('Current Number of Spoons:'),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                thumbShape: _SpoonThumb(),
+                thumbColor: Colors.blueAccent,
+              ),
+              child: Slider(
+                value: spoonCount.toDouble(),
+                min: 0,
+                max: 10,
+                divisions: 10,
+                label: "$spoonCount spoons",
+                onChanged: (double newValue) {
+                  setState(() {
+                    spoonCount = newValue.toInt();
+                  });
+                },
+              ),
+            ),
+
             Text('Blood Sugar:'),
             TextField(
                 controller: _bsugarsController,
                 style: TextStyle(color: Colors.black), //tracks the input
                 decoration: InputDecoration(
-                    hintText: "Enter single readings",
+                    hintText: "Enter single reading",
                     hintStyle: TextStyle(color: Colors.grey))),
             Text('Heart Health (Systolic/Diastolic/Heart Rate/O²):'),
             TextField(
@@ -258,7 +329,28 @@ class _EntryScreenState extends State<EntryScreen> {
                   hintText: "Please Enter your Weight(Lb)",
                   hintStyle: TextStyle(color: Colors.grey)),
             ),
-            Text('Consumptions:'),
+            Text(
+              'Sleep Cycle:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text('Bed Time:'),
+            TextField(
+                controller: _sleepTimeController,
+                style: TextStyle(color: Colors.black),
+                decoration: InputDecoration(
+                    hintText: '10.00PM',
+                    hintStyle: TextStyle(color: Colors.grey))),
+            Text('Woke up at:'),
+            TextField(
+                controller: _wakeTimeController,
+                style: TextStyle(color: Colors.black),
+                decoration: InputDecoration(
+                    hintText: '7.00AM',
+                    hintStyle: TextStyle(color: Colors.grey))),
+            Text(
+              'Consumptions:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             Text('Meals/Medications:'),
             TextField(
               controller: _mnmController,
@@ -289,7 +381,10 @@ class _EntryScreenState extends State<EntryScreen> {
                 },
               ),
             ),
-            Text('Internal & External factors:'),
+            Text(
+              'Internal & External factors:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             Text('Activities:'),
             TextField(
               controller: _activitiesController,
@@ -347,16 +442,6 @@ class _EntryScreenState extends State<EntryScreen> {
                   double weight =
                       double.tryParse(_weightController.text) ?? 0.0;
 
-                  final now = DateTime.now();
-                  // Create a DateTime that combines the selected date with the current time
-                  final selectedDateTime = DateTime(
-                    now.year,
-                    now.month,
-                    widget.day,
-                    now.hour,
-                    now.minute,
-                    now.second,
-                  );
                   print(
                       "Saving entry with timestamp for selected date (day ${widget.day})");
                   await DatabaseHelper().insertEntry(
@@ -372,7 +457,8 @@ class _EntryScreenState extends State<EntryScreen> {
                       water.round(),
                       hHealth,
                       weight,
-                      mperiod);
+                      mperiod,
+                      spoonCount);
                   print("mnm before inserting: $mnmInput");
                   print("activities before inserting: $activitiesInput");
 
