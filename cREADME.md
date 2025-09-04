@@ -67,11 +67,15 @@ With the period marking feature completed, I have implemneted an enviroment wher
 With the inclusion of being able to delete entries in the app, something has broken with the app when used by the wifes phone. The app is not saving entries into the databse, this is only isolated to her phone however. It behaves properly in my phone, and two emulated phone eniroments, one being her phone runing android 14.
 8/15/2025
 Included a card where a user can input and store daily infomration, they should persist till they are replaced with other information. I did not include a way to clear the line as i do not want the app to block the user from adding values or encounter an automatic deletion issue.
+~8/30/2025
+I was taking a shower one morning before work and realized that the app was not monitoring its name sake, the spoons. The spoons is a concept quite similar to a energy bar, wehre every day a person has so much energy to spend each day. In this case the descritping item is a quantiy of spoons, hence the name of Spoonie. Since I could not find an Icon specificaly looking like an actul spoon, I had to create my own Icon to implement as a spoon slider. Although I think it looks more like a table tennis paddle more than a spoon but it is what I went with, the wife thinks its cute and if it is cute then it stays.
+Septmber 2025
+9/1/2025
+Decided that the contents of the main.dart file was getting too large again, decided to migrate the daily Information/Medications card to its own dart file, as well as the database review cards, ligthening the line count of the main.dart file.
 
 
 
 
 
+Current desires from the wife:
 
-Desires from the wife:
-A place for medications list, something like a tab.
