@@ -1,14 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'services/database_helper.dart';
 import 'entry_screen.dart';
 import 'package:intl/intl.dart';
 import 'Utilities/date_util.dart';
-import 'Widgs/calendar_widg.dart';
+import 'Widgs/calendar_widg.dart' show CalendarWidget;
 import 'Widgs/medications_card.dart';
 import 'Widgs/entry_review_list.dart';
 import 'dart:convert';
+import 'dart:async';
 
-void main() {
+//push notifications setup
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+Future<void> initializeNotifications() async {
+  const AndroidInitializationSettings androidSettings =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  final InitializationSettings initializationSettings = InitializationSettings(
+    android: androidSettings,
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+}
+
+Future<void> scheduleAppCheckIn() async {
+  try {
+    // Request notification permissions
+    final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidPlugin != null) {
+      await androidPlugin.requestNotificationsPermission();
+    }
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'spoonie_channel',
+      'App Check-In',
+      channelDescription: 'Suggests you check in with the app',
+      importance: Importance.high,
+      priority: Priority.high,
+      enableVibration: true,
+      playSound: true,
+      ticker: 'Daily Journal Check-In',
+    );
+
+    const NotificationDetails platformDetails =
+        NotificationDetails(android: androidDetails);
+
+    // Schedule a periodic notification
+    await flutterLocalNotificationsPlugin.periodicallyShow(
+      0, // notification id
+      'Spoonie Check-In',
+      'How are you feeling today? Care to log your symptoms?',
+      RepeatInterval.daily,
+      platformDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+
+    print('Notification scheduled successfully');
+  } catch (e) {
+    print('Error scheduling notification: $e');
+  }
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeNotifications();
+
+  // Schedule initial check-in
+  await scheduleAppCheckIn();
+
+  // Schedule recurring check-ins every 3 days
+  Timer.periodic(const Duration(days: 1), (timer) async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastNotification = prefs.getInt('lastNotification') ?? 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    // Check if 3 days have passed since last notification
+    if (now - lastNotification >= const Duration(days: 3).inMilliseconds) {
+      await scheduleAppCheckIn();
+      await prefs.setInt('lastNotification', now);
+    }
+  });
+
   runApp((SymptomTrackerApp()));
 }
 
