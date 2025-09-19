@@ -46,7 +46,7 @@ Future<void> scheduleAppCheckIn() async {
       priority: Priority.high,
       enableVibration: true,
       playSound: true,
-      ticker: 'Daily Journal Check-In',
+      ticker: 'Spoonie checking in',
     );
 
     const NotificationDetails platformDetails =

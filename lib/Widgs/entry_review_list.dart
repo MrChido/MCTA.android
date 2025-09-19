@@ -11,7 +11,7 @@ class EntryReviewList extends StatelessWidget {
   final DateTime selectedDate;
   final Function() onDataChanged;
 
-  EntryReviewList({
+  const EntryReviewList({
     required this.selectedDate,
     required this.onDataChanged,
   });

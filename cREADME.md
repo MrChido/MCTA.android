@@ -72,6 +72,8 @@ I was taking a shower one morning before work and realized that the app was not 
 Septmber 2025
 9/1/2025
 Decided that the contents of the main.dart file was getting too large again, decided to migrate the daily Information/Medications card to its own dart file, as well as the database review cards, ligthening the line count of the main.dart file.
+9/18/2025
+Finding out that Mellisa and I both have been neglecting the spoonie app, I have decided to actully implement a notification gently asking if the user is willing to add an entry. As to be not so intrusive and being thoughtful of the users attention i have set the notification interval to 3 days. I think 3 days is a respectable durration between notifications.
 
 
 
