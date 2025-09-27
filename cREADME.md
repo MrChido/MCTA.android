@@ -74,7 +74,8 @@ Septmber 2025
 Decided that the contents of the main.dart file was getting too large again, decided to migrate the daily Information/Medications card to its own dart file, as well as the database review cards, ligthening the line count of the main.dart file.
 9/18/2025
 Finding out that Mellisa and I both have been neglecting the spoonie app, I have decided to actully implement a notification gently asking if the user is willing to add an entry. As to be not so intrusive and being thoughtful of the users attention i have set the notification interval to 3 days. I think 3 days is a respectable durration between notifications.
-
+9/26/2025
+Wife made an observation that the cardio related information does not have a report in the cards. Since this cardio question has multiple fields in one string, I might break it down to two lines, one to define how the information is arragend and output it on a line below the definition.
 
 
 
