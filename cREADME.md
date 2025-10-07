@@ -76,6 +76,11 @@ Decided that the contents of the main.dart file was getting too large again, dec
 Finding out that Mellisa and I both have been neglecting the spoonie app, I have decided to actully implement a notification gently asking if the user is willing to add an entry. As to be not so intrusive and being thoughtful of the users attention i have set the notification interval to 3 days. I think 3 days is a respectable durration between notifications.
 9/26/2025
 Wife made an observation that the cardio related information does not have a report in the cards. Since this cardio question has multiple fields in one string, I might break it down to two lines, one to define how the information is arragend and output it on a line below the definition.
+9/20/2025
+I have implemented the output of the heart health information, it is deployed
+October 2025
+10/07/2025
+I added Melissa's Icon as the app icon for android devices. I had to change the size of the image but it looks decent on my phone. Im glad it was an easy addtion. and I am one step closer to setting up for closed testing with google. I think if everything plays out like i thoinkk it will I will meet my goal for being on google play at the turn of the year.
 
 
 
