@@ -68,7 +68,8 @@ class EntryReviewList extends StatelessWidget {
                     (entry['weight'] as num?)?.toStringAsFixed(1) ?? 'N/A';
                 final timestamp = (entry['timestamp'] as String?) ?? '';
                 final day = entry['day'] ?? '?';
-                final spoonCount = entry['spoons'] ?? 0;
+                final spoonCount = entry['spoonCount'] ?? 0;
+                final hHealth = entry['hHealth'] ?? 'N/A';
 
                 final actList =
                     removeBacksLashes(entry['activities'] as String?);
@@ -114,6 +115,8 @@ class EntryReviewList extends StatelessWidget {
                           "Weight: $weight lbs • Water Intake: ${entry['water'] ?? 'N/A'} oz\n"
                           "$sleepReport\n"
                           "Consumptions: $conList\n"
+                          "Heart Health:(Systolic/Diastolic/Heart Rate/Oxygen Saturation)\n"
+                          "$hHealth\n"
                           "Activities: $actList\n"
                           "Feelings and Symptoms: $fnsList",
                           style: TextStyle(fontSize: 14),
