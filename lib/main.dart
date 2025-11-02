@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/database_helper.dart';
+import 'services/firebase_notification_service.dart';
 import 'entry_screen.dart';
 import 'package:intl/intl.dart';
 import 'Utilities/date_util.dart';
@@ -23,7 +26,14 @@ Future<void> initializeNotifications() async {
     android: androidSettings,
   );
 
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  await flutterLocalNotificationsPlugin.initialize(
+    initializationSettings,
+    onDidReceiveNotificationResponse: (NotificationResponse response) {
+      // Handle notification tap
+      print('Notification tapped');
+      // You can add navigation logic here if needed
+    },
+  );
 }
 
 Future<void> scheduleAppCheckIn() async {
@@ -34,7 +44,24 @@ Future<void> scheduleAppCheckIn() async {
             AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidPlugin != null) {
-      await androidPlugin.requestNotificationsPermission();
+      final bool? granted =
+          await androidPlugin.requestNotificationsPermission();
+      if (granted != true) {
+        print('Notification permissions not granted');
+        return;
+      }
+    }
+
+    // Get the last notification time
+    final prefs = await SharedPreferences.getInstance();
+    final lastNotification = prefs.getInt('lastNotification') ?? 0;
+    final now = DateTime.now();
+
+    // If it's been less than 3 days since the last notification, schedule for 3 days from the last one
+    if (now.millisecondsSinceEpoch - lastNotification >=
+        const Duration(days: 3).inMilliseconds) {
+      await FirebaseMessaging.instance.subscribeToTopic('all_users');
+      await prefs.setInt('lastNotification', now.millisecondsSinceEpoch);
     }
 
     const AndroidNotificationDetails androidDetails =
@@ -52,43 +79,85 @@ Future<void> scheduleAppCheckIn() async {
     const NotificationDetails platformDetails =
         NotificationDetails(android: androidDetails);
 
-    // Schedule a periodic notification
-    await flutterLocalNotificationsPlugin.periodicallyShow(
-      0, // notification id
-      'Spoonie Check-In',
-      'How are you feeling today? Care to log your symptoms?',
-      RepeatInterval.daily,
-      platformDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    );
+    // Show immediate notification
+    // await flutterLocalNotificationsPlugin.show(
+    //   0,
+    //   'Spoonie Check-In',
+    //   'How are you feeling today? Care to log your symptoms?',
+    //   platformDetails,
+    // );
 
-    print('Notification scheduled successfully');
+    // Update last notification time
+    await prefs.setInt('lastNotification', now.millisecondsSinceEpoch);
+
+    print('Notification shown successfully');
   } catch (e) {
-    print('Error scheduling notification: $e');
+    print('Error showing notification: $e');
   }
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeNotifications();
 
-  // Schedule initial check-in
+  // Initialize Firebase
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  await setupFirebaseMessaging();
+  await initializeNotifications();
+  // Initialize Firebase Notifications
+
+//adding a timer for checking notifications
+  Timer.periodic(Duration(hours: 24), (timer) async {
+    await scheduleAppCheckIn();
+  });
+  //schedule first check immediately
   await scheduleAppCheckIn();
 
-  // Schedule recurring check-ins every 3 days
-  Timer.periodic(const Duration(days: 1), (timer) async {
-    final prefs = await SharedPreferences.getInstance();
-    final lastNotification = prefs.getInt('lastNotification') ?? 0;
-    final now = DateTime.now().millisecondsSinceEpoch;
+  runApp((SymptomTrackerApp()));
+}
 
-    // Check if 3 days have passed since last notification
-    if (now - lastNotification >= const Duration(days: 3).inMilliseconds) {
-      await scheduleAppCheckIn();
-      await prefs.setInt('lastNotification', now);
+Future<void> setupFirebaseMessaging() async {
+  // Get FCM token
+  final fcmToken = await FirebaseMessaging.instance.getToken();
+  print('FCM Token: $fcmToken'); // just to test
+
+  // Request permission
+  NotificationSettings settings =
+      await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  // Subscribe to the notification topic
+  await FirebaseMessaging.instance.subscribeToTopic('all_users');
+
+  // Handle background messages
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Handle foreground messages
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print('Received a message while in the foreground!');
+    if (message.notification != null) {
+      print('Message notification: ${message.notification?.title}');
     }
   });
+}
 
-  runApp((SymptomTrackerApp()));
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+
+  //check for the passing of 3 days
+  final prefs = await SharedPreferences.getInstance();
+  final lastNotification = prefs.getInt('lastNotification') ?? 0;
+  final now = DateTime.now();
+
+  if (now.millisecondsSinceEpoch - lastNotification >=
+      const Duration(days: 3).inMilliseconds) {
+    print('Would you like to check in with the app today?');
+    await prefs.setInt('lastNotification', now.millisecondsSinceEpoch);
+  }
 }
 
 typedef DayTapCallback = void Function(int day);

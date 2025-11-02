@@ -1,0 +1,8 @@
+{
+  "functions":{
+    "source": "functions"
+  },
+  "projects": {
+    "default": "mellzers-symptom-tracker"
+  }
+}
