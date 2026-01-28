@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/database_helper.dart';
-import 'services/firebase_notification_service.dart';
 import 'entry_screen.dart';
 import 'package:intl/intl.dart';
 import 'Utilities/date_util.dart';
