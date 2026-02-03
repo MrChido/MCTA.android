@@ -15,17 +15,12 @@ Water intake
 meals and medications consumed
 Activites performed
 symptoms and feelings
+and possibly others worth tracking
 
-All entries are stored in a localy placed database where the app resideds, thats where the database resides; tablet or phone or desktop.
+All entries are stored in a localy placed database which is sandboxed on mobile devices that have an Android OS.
 Placing the database onto the device of choice limits outsideers accesibility to the users information, and since this is a health oriented app, this is a major feature of the app.
-The database will reside inside of the documents folder of the device, for the need to be extracted for whatever need, in the event a export feature is implemented the database will be relocated to the app itself(planned).
 
-There is a review feature but is currently limited to individual dates, at this time a export feture is planned but not implemented
-
-Planed Project completion for initial state is end of the summer. 
-App testing and tweaking planned for the fall season.
-Submition for Google Play planned at the end of the year.
-this is the ideal timeline.
+There is a review feature, at this time a export feature is planned but not implemented
 
 Development timeline/progress:
 
@@ -40,7 +35,7 @@ Made the Month and Year, an opperable element alowing a user to select month and
 
 July 2025
 7/3 Did some major restructuring of the project code, the Main.dart file was getting to heavy so the things like color control and the bulk of the calendarWidget got moved to their own file structure.
-The Flare Icon that the user will see, emerges at 10 datapoints but as more entries are placec beyond 10 the larger that Flare Icon will grow. This signifies not only tie importance and urgency of the date, but in the event that there are a string of days with litteraly flare ups, you can visualy see which was the worse day. In talking with the wife/client, a end of the month review was discussed. at this point, a monthly review of the 3 most prevelant symptoms would be a good idea. We will see how we will implement that after establishing the review display.
+The Flare Icon that the user will see, emerges at 10 datapoints but as more entries are placed beyond 10 the larger that Flare Icon will grow. This signifies not only tie importance and urgency of the date, but in the event that there are a string of days with litteraly flare ups, you can visualy see which was the worse day. In talking with the wife/client, a end of the month review was discussed. at this point, a monthly review of the 3 most prevelant symptoms would be a good idea. We will see how we will implement that after establishing the review display.
 The wife expressed a desire to track water consumption and I happily agreeed to include that in the database and the entry screen. I am dragging my feet on the database reporting feature of the app, I have some idea ast to what I would like to see it as, and the functionality of it, but we will get on it soon, I think before I tackle the report, we need as much as we need to see in the database first. Should consult the wife on that aspect.
 Only having about 4 hours of sleep, and looking off the wife seeing me pale and feeling me as cold decded to check on my Health, my blood preasure. heart rate, and oxygen levels. I asked if we should include that in the tracker, she said sure. so I did, I also tweaked the helper text in the entry screen and modified the visual behavior of the review button.
 Trimmed some fat and made a discovery that imports can piggyback on other imports.
@@ -80,9 +75,11 @@ Wife made an observation that the cardio related information does not have a rep
 I have implemented the output of the heart health information, it is deployed
 October 2025
 10/07/2025
-I added Melissa's Icon as the app icon for android devices. I had to change the size of the image but it looks decent on my phone. Im glad it was an easy addtion. and I am one step closer to setting up for closed testing with google. I think if everything plays out like i thoinkk it will I will meet my goal for being on google play at the turn of the year.
+I added Melissa's Icon as the app icon for android devices. I had to change the size of the image but it looks decent on my phone. Im glad it was an easy addtion. and I am one step closer to setting up for closed testing with google. I think if everything plays out like i think it will I will meet my goal for being on google play at the turn of the year.
 
-
+Feb 2026
+2/03/2026
+Little was done between the last entry and now, the job i was working at had severely slowed down my effort, the deadline of being on google play was not achieved, and thats alright. Efforts for being in closed testing (CT) are almost complete, the Feature banner is created, Screenshots are selected, a privay polocy is in place ready for uploading. theres a few fields i have to fill out and then i get to send out my CT emails. New goals to be set: July, I plan to have the second coding done after digesting what my CT memebers have reported in. In the fall I plan to take care of any additional conditions needed to be on the Play Store. Then by the end of the 2026 year I am hopeful that I am on Google Play. 
 
 
 Current desires from the wife:
