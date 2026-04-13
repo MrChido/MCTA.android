@@ -11,26 +11,6 @@ class DatabaseHelper {
   //it avoids mulitple instances from spawning accidentaly
   static Database? _database;
 
-  // Log file handling
-  Future<void> _logError(String error) async {
-    try {
-      final directory = Directory('/storage/emulated/0/Documents');
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
-
-      final file = File(join(directory.path, 'MelsSymptomTracker_log.txt'));
-      final timestamp = DateTime.now().toIso8601String();
-      await file.writeAsString(
-        '$timestamp: $error\n',
-        mode: FileMode.append,
-      );
-    } catch (e) {
-      // If logging fails, we can't do much in release mode
-      print("Failed to log error: $e");
-    }
-  }
-
   Future<Database> get database async {
     try {
       if (_database != null) {
@@ -78,54 +58,49 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     try {
-      print("Starting database initialization...");
+      // NEW correct DB directory
+      final newDbDir = await getDatabasesPath();
+      final newPath = join(newDbDir, "symptoms.db");
 
-      final directory = await getApplicationDocumentsDirectory();
-      print("Got documents directory: ${directory.path}");
-      print("Directory exists before creation: ${await directory.exists()}");
+      // OLD incorrect DB directory (your current one)
+      final oldDir = await getApplicationDocumentsDirectory();
+      final oldPath = join(oldDir.path, "symptoms.db");
 
-      // Try to create directory with error handling
-      try {
-        await directory.create(recursive: true);
-        print("Directory created/verified successfully");
-      } catch (e) {
-        print("Error creating directory: $e");
-        // Continue anyway as the directory might exist
-      }
+      // --- STEP 1: Migrate old DB if needed ---
+      final oldExists = await databaseExists(oldPath);
+      final newExists = await databaseExists(newPath);
 
-      String path = join(directory.path, "symptoms.db");
-      print("Full database path: $path");
-      print("Directory exists after creation: ${await directory.exists()}");
-      print("Directory path permissions: ${directory.statSync().modeString()}");
+      if (!newExists && oldExists) {
+        print("Migrating existing database from old path to new path...");
+        await Directory(newDbDir).create(recursive: true);
+        await File(oldPath).copy(newPath);
 
-      // Only attempt recovery if database exists but can't be opened
-      if (await databaseExists(path)) {
+        // Optional cleanup
         try {
-          final testDb = await openDatabase(path, readOnly: true);
-          await testDb.close(); // Properly close the test connection
-        } catch (e) {
-          print("Database exists but cannot be opened: $e");
-          // Only delete if we can't even read the file
-          if (e.toString().contains('unable to open database file')) {
-            print("Database file is corrupted, attempting recovery...");
-            try {
-              await deleteDatabase(path);
-              print("Corrupted database file deleted successfully");
-            } catch (delError) {
-              print("Failed to delete corrupted database: $delError");
-              // If we can't delete it, let's try to continue anyway
-            }
-          }
+          await File(oldPath).delete();
+        } catch (_) {
+          print("Old DB delete failed, but migration succeeded.");
         }
       }
 
+      // --- STEP 2: Corruption check (new location only) ---
+      if (await databaseExists(newPath)) {
+        try {
+          final testDb = await openDatabase(newPath, readOnly: true);
+          await testDb.close();
+        } catch (e) {
+          print("Database corrupted, deleting...");
+          await deleteDatabase(newPath);
+        }
+      }
+
+      // --- STEP 3: Open DB in the correct location ---
       return await openDatabase(
-        path,
+        newPath,
         version: 3,
         onCreate: (db, version) async {
-          print("Creating new database at version $version");
           await db.execute('''
-            CREATE TABLE entries(
+          CREATE TABLE entries(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             day INTEGER,
             severity INTEGER,
@@ -144,13 +119,6 @@ class DatabaseHelper {
             spoonCount INTEGER
           )
         ''');
-          print("Database created successfully");
-        },
-        onOpen: (db) async {
-          print("Database opened successfully");
-          final tables = await db
-              .rawQuery('SELECT name FROM sqlite_master WHERE type="table"');
-          print("Available tables: ${tables.map((t) => t['name']).toList()}");
         },
       );
     } catch (e, stackTrace) {
@@ -183,7 +151,7 @@ class DatabaseHelper {
     int spoonCount,
   ) async {
     try {
-      await _logError("Starting insert operation");
+      //await _logError("Starting insert operation");
 
       // Get database instance with detailed error logging
       Database? dbInstance;
@@ -389,5 +357,21 @@ class DatabaseHelper {
           entry['symptoms'] != null ? jsonDecode(entry['symptoms']) : [];
       return entry;
     }).toList();
+  }
+
+  // Log file handling - moved to end of class to avoid blocking database initialization
+  Future<void> _logError(String error) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File(join(directory.path, 'MelsSymptomTracker_log.txt'));
+      final timestamp = DateTime.now().toIso8601String();
+      await file.writeAsString(
+        '$timestamp: $error\n',
+        mode: FileMode.append,
+      );
+    } catch (e) {
+      // If logging fails, we can't do much in release mode
+      print("Failed to log error: $e");
+    }
   }
 }

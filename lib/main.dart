@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/database_helper.dart';
@@ -13,150 +12,45 @@ import 'Widgs/entry_review_list.dart';
 import 'dart:convert';
 import 'dart:async';
 
-//push notifications setup
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
+// ---------------------------------------------------------
+// NOTIFICATION INITIALIZATION
+// ---------------------------------------------------------
 
-Future<void> initializeNotifications() async {
+Future<void> initializeNotifications(
+  FlutterLocalNotificationsPlugin plugin,
+) async {
   const AndroidInitializationSettings androidSettings =
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  final InitializationSettings initializationSettings = InitializationSettings(
-    android: androidSettings,
-  );
+  final InitializationSettings initializationSettings =
+      InitializationSettings(android: androidSettings);
 
-  await flutterLocalNotificationsPlugin.initialize(
-    initializationSettings,
-    onDidReceiveNotificationResponse: (NotificationResponse response) {
-      // Handle notification tap
-      print('Notification tapped');
-      // You can add navigation logic here if needed
-    },
-  );
-}
-
-Future<void> scheduleAppCheckIn() async {
-  try {
-    // Request notification permissions
-    final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
-        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-
-    if (androidPlugin != null) {
-      final bool? granted =
-          await androidPlugin.requestNotificationsPermission();
-      if (granted != true) {
-        print('Notification permissions not granted');
-        return;
-      }
-    }
-
-    // Get the last notification time
-    final prefs = await SharedPreferences.getInstance();
-    final lastNotification = prefs.getInt('lastNotification') ?? 0;
-    final now = DateTime.now();
-
-    // If it's been less than 3 days since the last notification, schedule for 3 days from the last one
-    if (now.millisecondsSinceEpoch - lastNotification >=
-        const Duration(days: 3).inMilliseconds) {
-      await FirebaseMessaging.instance.subscribeToTopic('all_users');
-      await prefs.setInt('lastNotification', now.millisecondsSinceEpoch);
-    }
-
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'spoonie_channel',
-      'App Check-In',
-      channelDescription: 'Suggests you check in with the app',
-      importance: Importance.high,
-      priority: Priority.high,
-      enableVibration: true,
-      playSound: true,
-      ticker: 'Spoonie checking in',
-    );
-
-    const NotificationDetails platformDetails =
-        NotificationDetails(android: androidDetails);
-
-    // Show immediate notification
-    // await flutterLocalNotificationsPlugin.show(
-    //   0,
-    //   'Spoonie Check-In',
-    //   'How are you feeling today? Care to log your symptoms?',
-    //   platformDetails,
-    // );
-
-    // Update last notification time
-    await prefs.setInt('lastNotification', now.millisecondsSinceEpoch);
-
-    print('Notification shown successfully');
-  } catch (e) {
-    print('Error showing notification: $e');
-  }
-}
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase
-  await Firebase.initializeApp();
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  await setupFirebaseMessaging();
-  await initializeNotifications();
-  // Initialize Firebase Notifications
-
-//adding a timer for checking notifications
-  Timer.periodic(Duration(hours: 24), (timer) async {
-    await scheduleAppCheckIn();
-  });
-  //schedule first check immediately
-  await scheduleAppCheckIn();
-
-  runApp((SymptomTrackerApp()));
-}
-
-Future<void> setupFirebaseMessaging() async {
-  // Get FCM token
-  final fcmToken = await FirebaseMessaging.instance.getToken();
-  print('FCM Token: $fcmToken'); // just to test
-
-  // Request permission
-  NotificationSettings settings =
-      await FirebaseMessaging.instance.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
-
-  // Subscribe to the notification topic
-  await FirebaseMessaging.instance.subscribeToTopic('all_users');
-
-  // Handle background messages
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  // Handle foreground messages
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print('Received a message while in the foreground!');
-    if (message.notification != null) {
-      print('Message notification: ${message.notification?.title}');
-    }
-  });
+  await plugin.initialize(initializationSettings);
 }
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
+  print("Background FCM received");
+}
 
-  //check for the passing of 3 days
-  final prefs = await SharedPreferences.getInstance();
-  final lastNotification = prefs.getInt('lastNotification') ?? 0;
-  final now = DateTime.now();
+// ---------------------------------------------------------
+// CLEAN, SAFE MAIN()
+// ---------------------------------------------------------
 
-  if (now.millisecondsSinceEpoch - lastNotification >=
-      const Duration(days: 3).inMilliseconds) {
-    print('Would you like to check in with the app today?');
-    await prefs.setInt('lastNotification', now.millisecondsSinceEpoch);
-  }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase FIRST
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Notifications SECOND
+  final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  await initializeNotifications(flutterLocalNotificationsPlugin);
+
+  // UI THIRD
+  runApp(SymptomTrackerApp());
 }
 
 typedef DayTapCallback = void Function(int day);
@@ -202,10 +96,17 @@ class _CalendarScreenState extends State<CalendarScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    loadEntries();
-    loadReviewedDays();
     _syncToCurrentMonthIfNeeded();
-    loadPeriodDays();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    // Load all data sequentially to ensure proper state management
+    await loadEntries();
+    if (!mounted) return;
+    await loadReviewedDays();
+    if (!mounted) return;
+    await loadPeriodDays();
   }
 
   @override
@@ -214,7 +115,7 @@ class _CalendarScreenState extends State<CalendarScreen>
     super.dispose();
   }
 
-  void loadPeriodDays() async {
+  Future<void> loadPeriodDays() async {
     print("Loading period days for ${currentMonth.year}-${currentMonth.month}");
     final dbHelper = DatabaseHelper();
     final db = await dbHelper.database;
@@ -232,9 +133,11 @@ class _CalendarScreenState extends State<CalendarScreen>
     );
 
     final newPeriodDays = result.map((row) => row['day'] as int).toSet();
-    setState(() {
-      periodDays = newPeriodDays;
-    });
+    if (mounted) {
+      setState(() {
+        periodDays = newPeriodDays;
+      });
+    }
   }
 
   @override
@@ -250,14 +153,13 @@ class _CalendarScreenState extends State<CalendarScreen>
       setState(() {
         currentMonth = DateTime(now.year, now.month);
         entriesPerDay.clear();
-        loadEntries();
-        if (isReviewMode) loadReviewedDays();
-        loadPeriodDays();
       });
+      // Reload data for new month
+      _initializeData();
     }
   }
 
-  void loadReviewedDays() async {
+  Future<void> loadReviewedDays() async {
     final dbHelper = DatabaseHelper();
     final int selectedYear = currentMonth.year;
     final int selectedMonth = currentMonth.month;
@@ -266,12 +168,15 @@ class _CalendarScreenState extends State<CalendarScreen>
       selectedYear,
       selectedMonth,
     );
-    setState(() {
-      reviewedDays = entryDays;
-    });
+    if (mounted) {
+      setState(() {
+        reviewedDays = entryDays;
+      });
+    }
   }
 
-  void loadEntries() async {
+  Future<void> loadEntries() async {
+    print("LOAD ENTRIES START");
     final dbHelper = DatabaseHelper();
     final db = await dbHelper.database;
 
@@ -289,9 +194,11 @@ class _CalendarScreenState extends State<CalendarScreen>
       final day = ts.day;
       tempMap[day] = (tempMap[day] ?? 0) + 1;
     }
-    setState(() {
-      entriesPerDay = tempMap;
-    });
+    if (mounted) {
+      setState(() {
+        entriesPerDay = tempMap;
+      });
+    }
   }
 
   Future<void> _onDayTapped(int day) async {

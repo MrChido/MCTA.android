@@ -3,16 +3,16 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services") // Firebase plugin (correct place)
 }
 
 val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("android/key.properties")
+val keystorePropertiesFile = rootProject.file("key.properties")
 
 println("DEBUG - rootProject dir: ${rootProject.projectDir}")
 println("DEBUG - File exists: ${keystorePropertiesFile.exists()}")
-if (keystorePropertiesFile.exists()){
+if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(keystorePropertiesFile.inputStream())
     println("DEBUG - Loaded keys: ${keystoreProperties.keys}")
 }
@@ -36,8 +36,8 @@ android {
         applicationId = "com.soggywombat.spoonie"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
-        versionCode = 2
-        versionName = "Vision 1Ab"
+        versionCode = 10
+        versionName = "Vision 1Ae"
     }
 
     signingConfigs {
@@ -51,17 +51,19 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             signingConfig = signingConfigs.getByName("release")
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
-    }
-
-    dependencies {
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22")
-        coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     }
 }
 
+dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.11.0"))
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
 
 flutter {
     source = "../.."
