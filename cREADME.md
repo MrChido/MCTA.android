@@ -79,8 +79,10 @@ I added Melissa's Icon as the app icon for android devices. I had to change the 
 
 Feb 2026
 2/03/2026
-Little was done between the last entry and now, the job i was working at had severely slowed down my effort, the deadline of being on google play was not achieved, and thats alright. Efforts for being in closed testing (CT) are almost complete, the Feature banner is created, Screenshots are selected, a privay polocy is in place ready for uploading. theres a few fields i have to fill out and then i get to send out my CT emails. New goals to be set: July, I plan to have the second coding done after digesting what my CT memebers have reported in. In the fall I plan to take care of any additional conditions needed to be on the Play Store. Then by the end of the 2026 year I am hopeful that I am on Google Play. 
+Little was done between the last entry and now, the job i was working at had severely slowed down my effort, the deadline of being on google play was not achieved, and thats alright. Efforts for being in closed testing (CT) are almost complete, the Feature banner is created, Screenshots are selected, a privay polocy is in place ready for uploading. theres a few fields i have to fill out and then i get to send out my CT emails. New goals to be set: July, I plan to have the second coding done after digesting what my CT memebers have reported in. In the fall I plan to take care of any additional conditions needed to be on the Play Store. Then by the end of the 2026 year I am hopeful that I am on Google Play.
 
-
+March 2026 4/10/2026
+With the assistance of a family member, and a bit from AI, the first CT build of Spoonie is accessable to all of my CTMemebers who are participating in this stage of the project. The ultimate issue was incomplete firebase programing as well as some database related issues. It was trying to find a database before it was able to create the database. For the rest of the month my CT participants are encouraged to use Spoonie and report back to me their thoughts at the end of the month.
+As of right now I am in a holding patern.
 Current desires from the wife:
 
