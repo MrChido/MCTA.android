@@ -65,6 +65,23 @@ class CalendarWidget extends StatelessWidget {
                   final textColor = (isReviewMode && reviewedDays.contains(day))
                       ? Colors.white
                       : Colors.black;
+                  //detect today
+                  final now = DateTime.now();
+                  final isToday = now.day == day &&
+                      now.month == currentMonth.month &&
+                      now.year == currentMonth.year;
+
+                  //donut logic
+                  final fillColor = isToday ? Colors.white : bgColor;
+
+                  final border = isToday
+                      ? Border.all(color: bgColor, width: 6) //donut ring
+                      : (periodDays.contains(day)
+                          ? Border.all(
+                              color: Color.fromARGB(255, 198, 67, 164),
+                              width: 5,
+                            )
+                          : null);
 
                   return GestureDetector(
                     onTap: () => onDayTapped(day),
@@ -72,14 +89,9 @@ class CalendarWidget extends StatelessWidget {
                       height: 40,
                       margin: EdgeInsets.all(2),
                       decoration: BoxDecoration(
-                        color: bgColor,
+                        color: fillColor,
                         shape: BoxShape.circle,
-                        border: periodDays.contains(day)
-                            ? Border.all(
-                                color: Color.fromARGB(255, 198, 67, 164),
-                                width: 5,
-                              )
-                            : null,
+                        border: border,
                       ),
                       child: Center(
                         //This is the controll for the day being at its most extreme point

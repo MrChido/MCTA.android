@@ -138,14 +138,14 @@ class DatabaseHelper {
     int day,
     int severity,
     bool fatigue,
-    String sugars,
-    String mnm,
-    String activities,
-    String symptoms,
+    int sugars,
+    String? mnm,
+    String? activities,
+    String? symptoms,
     int wake,
     int sleep,
     int water,
-    String hHealth,
+    String? hHealth,
     double weight,
     bool mperiod,
     int spoonCount,
@@ -174,14 +174,10 @@ class DatabaseHelper {
       }
 
       // Create all the data
-      String mnmInput = mnm.isNotEmpty ? jsonEncode(mnm) : '[]';
       final currentTime = DateTime.now();
       final timestamp = DateTime(currentTime.year, currentTime.month, day,
               currentTime.hour, currentTime.minute, currentTime.second)
           .toIso8601String();
-      String activitiesInput =
-          activities.isNotEmpty ? jsonEncode(activities) : '[]';
-      String symptomsInput = symptoms.isNotEmpty ? jsonEncode(symptoms) : '[]';
 
       // Create the entry map
       final entry = {
@@ -192,9 +188,9 @@ class DatabaseHelper {
         'sleep': sleep,
         'timestamp': timestamp,
         'BSugars': sugars,
-        'mnm': mnmInput,
-        'activities': activitiesInput,
-        'symptoms': symptomsInput,
+        'mnm': mnm,
+        'activities': activities,
+        'symptoms': symptoms,
         'water': water,
         'hHealth': hHealth,
         'weight': weight,

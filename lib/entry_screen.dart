@@ -150,6 +150,11 @@ class _WaterDropThumb extends SliderComponentShape {
 }
 
 class _EntryScreenState extends State<EntryScreen> {
+  int parseBloodSugar(String? input) {
+    if (input == null || input.trim().isEmpty) return -1;
+    return int.tryParse(input) ?? -1;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -412,10 +417,11 @@ class _EntryScreenState extends State<EntryScreen> {
                   final wakeTime = getWakeTimeValue();
                   print(
                       'Sleep time being saved to DB: $sleepTime'); // Debug print
-                  String bloodSugarInput =
-                      _bsugarsController.text.trim(); //get user input
-                  //int bloodSugarValue = int.tryParse(bloodSugarInput) ?? 0;
-                  String hHealth = _hHealthController.text.trim();
+                  final bloodSugarValue =
+                      parseBloodSugar(_bsugarsController.text);
+                  String? hHealth = _hHealthController.text.trim().isEmpty
+                      ? null
+                      : _hHealthController.text.trim();
 
                   List<String> mnm = _mnmController.text
                       .trim()
@@ -423,12 +429,16 @@ class _EntryScreenState extends State<EntryScreen> {
                       .map((e) => e.trim())
                       .where((e) => e.isNotEmpty)
                       .toList();
+
+                  String? mnmInput = mnm.isEmpty ? null : jsonEncode(mnm);
                   List<String> activities = _activitiesController.text
                       .trim()
                       .split(",")
                       .map((e) => e.trim())
                       .where((e) => e.isNotEmpty)
                       .toList();
+                  String? activitiesInput =
+                      activities.isEmpty ? null : jsonEncode(activities);
                   List<String> symptoms = _symptomsController.text
                       .trim()
                       .split(",")
@@ -436,8 +446,6 @@ class _EntryScreenState extends State<EntryScreen> {
                       .where((e) => e.isNotEmpty)
                       .toList();
 
-                  String mnmInput = jsonEncode(mnm);
-                  String activitiesInput = jsonEncode(activities);
                   String symptomsInput = jsonEncode(symptoms);
                   double weight =
                       double.tryParse(_weightController.text) ?? 0.0;
@@ -448,7 +456,7 @@ class _EntryScreenState extends State<EntryScreen> {
                       widget.day, // Use the selected day for saving
                       severity.round(),
                       fatigue,
-                      bloodSugarInput,
+                      bloodSugarValue,
                       mnmInput,
                       activitiesInput,
                       symptomsInput,

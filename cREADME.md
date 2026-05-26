@@ -84,5 +84,11 @@ Little was done between the last entry and now, the job i was working at had sev
 April 2026 4/10/2026
 With the assistance of a family member, and a bit from AI, the first CT build of Spoonie is accessable to all of my CTMemebers who are participating in this stage of the project. The ultimate issue was incomplete firebase programing as well as some database related issues. It was trying to find a database before it was able to create the database. For the rest of the month my CT participants are encouraged to use Spoonie and report back to me their thoughts at the end of the month.
 As of right now I am in a holding patern.
+
+May 2026 5/25/2026
+Today was the first day back to coding. Decided to tackle a few UI/UX issues, one was an easy way to identify on the calendar what day it currently is, decided the best way was to make the current day have a white core, it stands out pretty well.
+Decided to tackle some of the more obveous display issues with the data cards, primarily the display of the consumed, the actvities and symptoms. Whatever changes i did to the code did not refelct as i had wished in the results of the code, which is fine. 
+Also handled some of the default database entry segments. Idealy if a user decides not to include relevant datan the app should include a default response, hopefuly to not cause issues with the database. not sure if i got them all, but will review them later, maybe durring the week and then doing touch ups next week. 
+
 Current desires from the wife:
 

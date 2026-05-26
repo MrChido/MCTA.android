@@ -18,7 +18,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.soggywombat.spoonie"
+    namespace = "com.soggywombat.spoonie.dev"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -33,11 +33,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.soggywombat.spoonie"
+        applicationId = "com.soggywombat.spoonie.dev"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
-        versionCode = 10
-        versionName = "Vision 1Ae"
+        versionCode = 11
+        versionName = "Vision 1Aw2"
     }
 
     signingConfigs {

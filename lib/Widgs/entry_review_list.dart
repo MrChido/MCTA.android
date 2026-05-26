@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/database_helper.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
 
 String removeBacksLashes(String? raw) {
   if (raw == null || raw.trim().isEmpty) return 'N/A';
@@ -69,11 +70,14 @@ class EntryReviewList extends StatelessWidget {
                 final timestamp = (entry['timestamp'] as String?) ?? '';
                 final day = entry['day'] ?? '?';
                 final spoonCount = entry['spoonCount'] ?? 0;
-                final hHealth = entry['hHealth'] ?? 'N/A';
+                final hHealth = entry['hHealth'] ?? 'Not recorded';
 
                 final actList =
                     removeBacksLashes(entry['activities'] as String?);
-                final conList = removeBacksLashes(entry['mnm'] as String?);
+                final conList = entry['mnm'];
+                final mnm = conList == null
+                    ? 'not recorded'
+                    : jsonDecode(conList).join(",");
                 final fnsList = removeBacksLashes(entry['symptoms'] as String?);
                 final fatigue =
                     entry['fatigue'] == 1 ? 'Fatigued' : 'No Fatigue';

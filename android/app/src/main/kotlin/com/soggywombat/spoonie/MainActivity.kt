@@ -1,4 +1,4 @@
-package com.soggywombat.spoonie
+package com.soggywombat.spoonie.dev
 
 import io.flutter.embedding.android.FlutterActivity
 
