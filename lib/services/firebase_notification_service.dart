@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class FirebaseNotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
     // Request permission
@@ -15,14 +16,14 @@ class FirebaseNotificationService {
     );
 
     // Initialize local notifications
-    const AndroidInitializationSettings androidSettings = 
+    const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    
+
     final InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
     );
 
-    await _localNotifications.initialize(initSettings);
+    await _localNotifications.initialize(settings: initSettings);
 
     // Handle background messages
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -49,7 +50,8 @@ class FirebaseNotificationService {
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
       'spoonie_channel',
       'App Check-In',
       channelDescription: 'Suggests you check in with the app',
@@ -64,10 +66,10 @@ class FirebaseNotificationService {
     );
 
     await _localNotifications.show(
-      0,
-      message.notification?.title ?? 'Spoonie Check-In',
-      message.notification?.body ?? 'How are you feeling today?',
-      platformDetails,
+      id: 0,
+      title: message.notification?.title ?? 'Spoonie Check-In',
+      body: message.notification?.body ?? 'How are you feeling today?',
+      notificationDetails: platformDetails,
     );
   }
 }

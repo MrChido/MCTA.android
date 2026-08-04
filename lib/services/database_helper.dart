@@ -149,6 +149,7 @@ class DatabaseHelper {
     double weight,
     bool mperiod,
     int spoonCount,
+    String timestamp,
   ) async {
     try {
       //await _logError("Starting insert operation");
@@ -181,12 +182,14 @@ class DatabaseHelper {
 
       // Create the entry map
       final entry = {
+        //'created_at': created_at,
+        //'version': version,
         'day': day,
         'severity': severity,
         'fatigue': fatigue ? 1 : 0,
         'wake': wake,
         'sleep': sleep,
-        'timestamp': timestamp,
+        'timestamp': DateTime.now().toIso8601String(),
         'BSugars': sugars,
         'mnm': mnm,
         'activities': activities,
@@ -369,5 +372,31 @@ class DatabaseHelper {
       // If logging fails, we can't do much in release mode
       print("Failed to log error: $e");
     }
+  }
+
+  Future<Map<String, dynamic>> getEntryById(int id) async {
+    final db = await database;
+    final result = await db.query(
+      'entries',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    return result.first;
+  }
+
+  Future<void> updateEntry(int id, Map<String, dynamic> updatedValues) async {
+    final db = await database;
+    //Retrieve information
+    final originalEntry = await getEntryById(id);
+    //ensure orginal timestamp is preserved
+    updatedValues['timestamp'] = originalEntry['timestamp'];
+    // Perform the update
+    await db.update(
+      'entries',
+      updatedValues,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }

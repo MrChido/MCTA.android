@@ -25,7 +25,7 @@ Future<void> initializeNotifications(
   final InitializationSettings initializationSettings =
       InitializationSettings(android: androidSettings);
 
-  await plugin.initialize(initializationSettings);
+  await plugin.initialize(settings: initializationSettings);
 }
 
 @pragma('vm:entry-point')

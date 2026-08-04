@@ -90,5 +90,11 @@ Today was the first day back to coding. Decided to tackle a few UI/UX issues, on
 Decided to tackle some of the more obveous display issues with the data cards, primarily the display of the consumed, the actvities and symptoms. Whatever changes i did to the code did not refelct as i had wished in the results of the code, which is fine. 
 Also handled some of the default database entry segments. Idealy if a user decides not to include relevant datan the app should include a default response, hopefuly to not cause issues with the database. not sure if i got them all, but will review them later, maybe durring the week and then doing touch ups next week. 
 
+June was a celabratory off month as the app is officialy eligible to go to production, eligible, not ready.
+
+July 07 2026
+Getting back on the horse, the first planned update to spoonie is that database entries are fully mutable, it does go against the color change features of the calendar view but it speaks to how the user wants to use the app. have a single entry for a day or have several, it should be an option of the user. Such is the goal of the day. - Achieved 7/21
+
+
 Current desires from the wife:
 

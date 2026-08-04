@@ -8,12 +8,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import "Utilities/slumber_util.dart";
 
 class EntryScreen extends StatefulWidget {
+  final bool isEditing;
+  final int? entryId;
+  final Map<String, dynamic>? existingEntry;
   final int day;
-  final Function(int) updateEntryCount;
+  final Function(int)? updateEntryCount;
   //final MedicationEntry ? existingEntry;
   //final bool isEditing;
   const EntryScreen({
     super.key,
+    this.isEditing = false,
+    this.entryId,
+    this.existingEntry,
     required this.day,
     required this.updateEntryCount,
   });
@@ -160,6 +166,89 @@ class _EntryScreenState extends State<EntryScreen> {
     super.initState();
     // Preload the spoon image
     _SpoonThumb()._loadSpoonImage();
+    if (widget.isEditing && widget.existingEntry != null) {
+      final e = widget.existingEntry!;
+      severity = (e['severity'] is int)
+          ? e['severity']
+          : int.tryParse("${e['severity']}") ?? 4;
+      _bsugarsController.text = (e['BSugars']?.toString() ?? "");
+      water =
+          (e['water'] is int) ? e['water'] : int.tryParse("${e['water']}") ?? 0;
+      fatigue = (e['fatigue'] == 1 || e['fatigue'] == true);
+
+      final rawMnM = e['mnm'];
+
+      if (rawMnM != null && rawMnM.isNotEmpty) {
+        try {
+          // Try to decode JSON list
+          final decoded = jsonDecode(rawMnM);
+
+          // If the decoded value is actually a List, join it
+          if (decoded is List) {
+            _mnmController.text = decoded.join(", ");
+          } else {
+            // Fallback: if it's not a list, just show it raw
+            _mnmController.text = rawMnM;
+          }
+        } catch (_) {
+          // If JSON decoding fails, show the raw string
+          _mnmController.text = rawMnM;
+        }
+      } else {
+        _mnmController.text = "";
+      }
+      final rawActivities = e['activities'];
+
+      if (rawActivities != null && rawActivities.isNotEmpty) {
+        try {
+          // Try to decode JSON list
+          final decoded = jsonDecode(rawActivities);
+
+          // If the decoded value is actually a List, join it
+          if (decoded is List) {
+            _activitiesController.text = decoded.join(", ");
+          } else {
+            // Fallback: if it's not a list, just show it raw
+            _activitiesController.text = rawActivities;
+          }
+        } catch (_) {
+          // If JSON decoding fails, show the raw string
+          _activitiesController.text = rawActivities;
+        }
+      } else {
+        _activitiesController.text = "";
+      }
+
+      final rawSymptoms = e['symptoms'];
+
+      if (rawSymptoms != null && rawSymptoms.isNotEmpty) {
+        try {
+          // Try to decode JSON list
+          final decoded = jsonDecode(rawSymptoms);
+
+          // If the decoded value is actually a List, join it
+          if (decoded is List) {
+            _symptomsController.text = decoded.join(", ");
+          } else {
+            // Fallback: if it's not a list, just show it raw
+            _symptomsController.text = rawSymptoms;
+          }
+        } catch (_) {
+          // If JSON decoding fails, show the raw string
+          _symptomsController.text = rawSymptoms;
+        }
+      } else {
+        _symptomsController.text = "";
+      }
+      _wakeTimeController.text = e['wake']?.toString() ?? "";
+      _sleepTimeController.text = e['sleep']?.toString() ?? "";
+      _hHealthController.text = e['hHealth']?.toString() ?? "";
+      _weightController.text = e['weight']?.toString() ?? "";
+      mperiod = (e['mperiod'] == 1 || e['mperiod'] == true);
+      spoonCount = (e['spoonCount'] is int)
+          ? e['spoonCount']
+          : int.tryParse("${e['spoonCount']}") ?? 0;
+    }
   }
 
   bool fatigue = false;
@@ -244,6 +333,7 @@ class _EntryScreenState extends State<EntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("EditEntryScreen: build() reached");
     return Scaffold(
       appBar: AppBar(title: Text('Please fill all the fields')),
       body: Padding(
@@ -412,6 +502,7 @@ class _EntryScreenState extends State<EntryScreen> {
             Builder(
               builder: (context) => ElevatedButton(
                 onPressed: () async {
+                  print("Edit button pressed.");
                   print("Save button tapped.");
                   final sleepTime = getSleepTimeValue();
                   final wakeTime = getWakeTimeValue();
@@ -445,32 +536,59 @@ class _EntryScreenState extends State<EntryScreen> {
                       .map((e) => e.trim())
                       .where((e) => e.isNotEmpty)
                       .toList();
+                  String? symptomsInput =
+                      symptoms.isEmpty ? null : jsonEncode(symptoms);
 
-                  String symptomsInput = jsonEncode(symptoms);
                   double weight =
                       double.tryParse(_weightController.text) ?? 0.0;
 
                   print(
                       "Saving entry with timestamp for selected date (day ${widget.day})");
-                  await DatabaseHelper().insertEntry(
-                      widget.day, // Use the selected day for saving
-                      severity.round(),
-                      fatigue,
-                      bloodSugarValue,
-                      mnmInput,
-                      activitiesInput,
-                      symptomsInput,
-                      wakeTime,
-                      sleepTime,
-                      water.round(),
-                      hHealth,
-                      weight,
-                      mperiod,
-                      spoonCount);
+
+                  if (widget.isEditing) {
+                    //update existing entry
+                    final updatedValues = {
+                      'day': widget.day,
+                      'severity': severity.round(),
+                      'fatigue': fatigue ? 1 : 0,
+                      'BSugars': bloodSugarValue,
+                      'mnm': mnmInput,
+                      'activities': activitiesInput,
+                      'symptoms': symptomsInput,
+                      'wake': wakeTime,
+                      'sleep': sleepTime,
+                      'water': water.round(),
+                      'hHealth': hHealth,
+                      'weight': weight,
+                      'mperiod': mperiod ? 1 : 0,
+                      'spoonCount': spoonCount,
+                    };
+
+                    await DatabaseHelper()
+                        .updateEntry(widget.entryId!, updatedValues);
+                  } else {
+                    await DatabaseHelper().insertEntry(
+                        widget.day, // Use the selected day for saving
+                        severity.round(),
+                        fatigue,
+                        bloodSugarValue,
+                        mnmInput,
+                        activitiesInput,
+                        symptomsInput,
+                        wakeTime,
+                        sleepTime,
+                        water.round(),
+                        hHealth,
+                        weight,
+                        mperiod,
+                        spoonCount,
+                        DateTime.now().toIso8601String() // Current timestamp
+                        );
+                  }
                   print("mnm before inserting: $mnmInput");
                   print("activities before inserting: $activitiesInput");
 
-                  widget.updateEntryCount(widget
+                  widget.updateEntryCount?.call(widget
                       .day); // Calls the function passed from CalendarScreen
                   print("About to pop back to main");
                   FocusScope.of(context).unfocus();

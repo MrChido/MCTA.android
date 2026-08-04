@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/database_helper.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
+import '../entry_screen.dart';
 
 String removeBacksLashes(String? raw) {
   if (raw == null || raw.trim().isEmpty) return 'N/A';
@@ -128,8 +129,26 @@ class EntryReviewList extends StatelessWidget {
                         if (isExpanded) ...[
                           Divider(height: 20),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              // Edit button
+                              IconButton(
+                                icon: Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => EntryScreen(
+                                        isEditing: true,
+                                        entryId: entry['id'],
+                                        existingEntry: entry,
+                                        day: entry['day'],
+                                        updateEntryCount: (int _) {},
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                               IconButton(
                                 icon: Icon(Icons.delete, color: Colors.red),
                                 onPressed: () async {
