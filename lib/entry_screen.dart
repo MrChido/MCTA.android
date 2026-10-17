@@ -161,6 +161,21 @@ class _EntryScreenState extends State<EntryScreen> {
   bool _aNoonMed = false;
   bool _eveMed = false;
   bool _oNightMed = false;
+
+  //wrap feature for the daily schedule of medications
+  Widget medCheck(String label, bool value, Function(bool) onChanged) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Checkbox(
+          value: value,
+          onChanged: (v) => onChanged(v ?? false),
+        ),
+        Text(label),
+      ],
+    );
+  }
+
   int parseBloodSugar(String? input) {
     if (input == null || input.trim().isEmpty) return -1;
     return int.tryParse(input) ?? -1;
@@ -340,7 +355,7 @@ class _EntryScreenState extends State<EntryScreen> {
   Widget build(BuildContext context) {
     print("EditEntryScreen: build() reached");
     return Scaffold(
-      appBar: AppBar(title: Text('Please fill all the fields')),
+      appBar: AppBar(title: Text('Please fill what is relevant')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
@@ -461,50 +476,21 @@ class _EntryScreenState extends State<EntryScreen> {
             ),
             //this is the medication time tracker
             Text('Time of Administration:'),
-            CheckboxListTile(
-              title: Text("Early Morning"),
-              value: _eMornMed,
-              onChanged: (bool? value) {
-                setState(() {
-                  _eMornMed = value ?? false;
-                });
-              },
-            ),
-            CheckboxListTile(
-              title: Text("Morning"),
-              value: _mornMed,
-              onChanged: (bool? value) {
-                setState(() {
-                  _mornMed = value ?? false;
-                });
-              },
-            ),
-            CheckboxListTile(
-              title: Text("Afternoon"),
-              value: _aNoonMed,
-              onChanged: (bool? value) {
-                setState(() {
-                  _aNoonMed = value ?? false;
-                });
-              },
-            ),
-            CheckboxListTile(
-              title: Text("Evening"),
-              value: _eveMed,
-              onChanged: (bool? value) {
-                setState(() {
-                  _eveMed = value ?? false;
-                });
-              },
-            ),
-            CheckboxListTile(
-              title: Text("Overnight"),
-              value: _oNightMed,
-              onChanged: (bool? value) {
-                setState(() {
-                  _oNightMed = value ?? false;
-                });
-              },
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                medCheck("Early Morning", _eMornMed,
+                    (v) => setState(() => _eMornMed = v)),
+                medCheck(
+                    "Morning", _mornMed, (v) => setState(() => _mornMed = v)),
+                medCheck("Afternoon", _aNoonMed,
+                    (v) => setState(() => _aNoonMed = v)),
+                medCheck(
+                    "Evening", _eveMed, (v) => setState(() => _eveMed = v)),
+                medCheck("Overnight", _oNightMed,
+                    (v) => setState(() => _oNightMed = v)),
+              ],
             ),
 
             Text('water (oz):'),
