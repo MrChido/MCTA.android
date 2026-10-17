@@ -97,7 +97,8 @@ class DatabaseHelper {
       // --- STEP 3: Open DB in the correct location ---
       return await openDatabase(
         newPath,
-        version: 3,
+        version: 4,
+        onUpgrade: _onUpgrade,
         onCreate: (db, version) async {
           await db.execute('''
           CREATE TABLE entries(
@@ -116,7 +117,8 @@ class DatabaseHelper {
             hHealth TEXT,
             weight REAL,
             mperiod INTEGER DEFAULT 0,
-            spoonCount INTEGER
+            spoonCount INTEGER,
+          
           )
         ''');
         },
@@ -125,6 +127,19 @@ class DatabaseHelper {
       print("Error initializing database: $e");
       print("Stack trace: $stackTrace");
       rethrow;
+    }
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 4) {
+      await db.execute(
+          "ALTER TABLE entries ADD COLUMN MornMed INTEGER NOT NULL DEFAULT 0");
+      await db.execute(
+          "ALTER TABLE entries ADD COLUMN AnoonMed INTEGER NOT NULL DEFAULT 0");
+      await db.execute(
+          "ALTER TABLE entries ADD COLUMN EveMed INTEGER NOT NULL DEFAULT 0");
+      await db.execute(
+          "ALTER TABLE entries ADD COLUMN OnightMed INTEGER NOT NULL DEFAULT 0");
     }
   }
 
@@ -149,6 +164,10 @@ class DatabaseHelper {
     double weight,
     bool mperiod,
     int spoonCount,
+    bool mornMed,
+    bool aNoonMed,
+    bool eveMed,
+    bool oNightMed,
     String timestamp,
   ) async {
     try {

@@ -95,6 +95,7 @@ June was a celabratory off month as the app is officialy eligible to go to produ
 July 07 2026
 Getting back on the horse, the first planned update to spoonie is that database entries are fully mutable, it does go against the color change features of the calendar view but it speaks to how the user wants to use the app. have a single entry for a day or have several, it should be an option of the user. Such is the goal of the day. - Achieved 7/21
 
-
+October 17 2026
+Have sa good chucnk of time to do somethings, mostly with the wife, thought id add some code to spoonie while she was asleep. Hope she doesnt mind. Added a feature where users can mark when the took their medications durring the day. Morning, afternoon, evening and overnight. Thought simple would be best, could be more precise but we will see how it looks and can make changes as needed. one step closer to being done and submited for Googles public release.
 Current desires from the wife:
 

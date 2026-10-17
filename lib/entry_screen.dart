@@ -156,6 +156,10 @@ class _WaterDropThumb extends SliderComponentShape {
 }
 
 class _EntryScreenState extends State<EntryScreen> {
+  bool _mornMed = false;
+  bool _aNoonMed = false;
+  bool _eveMed = false;
+  bool _oNightMed = false;
   int parseBloodSugar(String? input) {
     if (input == null || input.trim().isEmpty) return -1;
     return int.tryParse(input) ?? -1;
@@ -454,6 +458,45 @@ class _EntryScreenState extends State<EntryScreen> {
                   hintText: "separate by commas",
                   hintStyle: TextStyle(color: Colors.grey)),
             ),
+            //this is the medication time tracker
+            Text('Time of Administration:'),
+            CheckboxListTile(
+              title: Text("Morning"),
+              value: _mornMed,
+              onChanged: (bool? value) {
+                setState(() {
+                  _mornMed = value ?? false;
+                });
+              },
+            ),
+            CheckboxListTile(
+              title: Text("Afternoon"),
+              value: _aNoonMed,
+              onChanged: (bool? value) {
+                setState(() {
+                  _aNoonMed = value ?? false;
+                });
+              },
+            ),
+            CheckboxListTile(
+              title: Text("Evening"),
+              value: _eveMed,
+              onChanged: (bool? value) {
+                setState(() {
+                  _eveMed = value ?? false;
+                });
+              },
+            ),
+            CheckboxListTile(
+              title: Text("Overnight"),
+              value: _oNightMed,
+              onChanged: (bool? value) {
+                setState(() {
+                  _oNightMed = value ?? false;
+                });
+              },
+            ),
+
             Text('water (oz):'),
             SliderTheme(
               data: SliderTheme.of(context).copyWith(
@@ -562,6 +605,10 @@ class _EntryScreenState extends State<EntryScreen> {
                       'weight': weight,
                       'mperiod': mperiod ? 1 : 0,
                       'spoonCount': spoonCount,
+                      'MornMed': _mornMed ? 1 : 0,
+                      'AnoonMed': _aNoonMed ? 1 : 0,
+                      'EveMed': _eveMed ? 1 : 0,
+                      'OnightMed': _oNightMed ? 1 : 0,
                     };
 
                     await DatabaseHelper()
