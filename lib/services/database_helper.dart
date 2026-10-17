@@ -133,6 +133,8 @@ class DatabaseHelper {
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 4) {
       await db.execute(
+          "ALTER TABLE entries ADD COLUMN eMornMed INTEGER NOT NULL DEFAULT 0");
+      await db.execute(
           "ALTER TABLE entries ADD COLUMN MornMed INTEGER NOT NULL DEFAULT 0");
       await db.execute(
           "ALTER TABLE entries ADD COLUMN AnoonMed INTEGER NOT NULL DEFAULT 0");
@@ -164,6 +166,7 @@ class DatabaseHelper {
     double weight,
     bool mperiod,
     int spoonCount,
+    bool eMornMed,
     bool mornMed,
     bool aNoonMed,
     bool eveMed,
@@ -217,7 +220,12 @@ class DatabaseHelper {
         'hHealth': hHealth,
         'weight': weight,
         'mperiod': mperiod ? 1 : 0, // Convert boolean t integer
-        'spoonCount': spoonCount
+        'spoonCount': spoonCount,
+        'eMornMed': eMornMed ? 1 : 0,
+        'MornMed': mornMed ? 1 : 0,
+        'aNoonMed': aNoonMed ? 1 : 0,
+        'EveMed': eveMed ? 1 : 0,
+        'OnightMed': oNightMed ? 1 : 0
       };
 
       print("Attempting to insert entry with data: $entry");

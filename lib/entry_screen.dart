@@ -156,6 +156,7 @@ class _WaterDropThumb extends SliderComponentShape {
 }
 
 class _EntryScreenState extends State<EntryScreen> {
+  bool _eMornMed = false;
   bool _mornMed = false;
   bool _aNoonMed = false;
   bool _eveMed = false;
@@ -461,6 +462,15 @@ class _EntryScreenState extends State<EntryScreen> {
             //this is the medication time tracker
             Text('Time of Administration:'),
             CheckboxListTile(
+              title: Text("Early Morning"),
+              value: _eMornMed,
+              onChanged: (bool? value) {
+                setState(() {
+                  _eMornMed = value ?? false;
+                });
+              },
+            ),
+            CheckboxListTile(
               title: Text("Morning"),
               value: _mornMed,
               onChanged: (bool? value) {
@@ -605,8 +615,9 @@ class _EntryScreenState extends State<EntryScreen> {
                       'weight': weight,
                       'mperiod': mperiod ? 1 : 0,
                       'spoonCount': spoonCount,
+                      'eMornMed': _eMornMed ? 1 : 0,
                       'MornMed': _mornMed ? 1 : 0,
-                      'AnoonMed': _aNoonMed ? 1 : 0,
+                      'aNoonMed': _aNoonMed ? 1 : 0,
                       'EveMed': _eveMed ? 1 : 0,
                       'OnightMed': _oNightMed ? 1 : 0,
                     };
@@ -629,6 +640,11 @@ class _EntryScreenState extends State<EntryScreen> {
                         weight,
                         mperiod,
                         spoonCount,
+                        _eMornMed,
+                        _mornMed,
+                        _aNoonMed,
+                        _eveMed,
+                        _oNightMed,
                         DateTime.now().toIso8601String() // Current timestamp
                         );
                   }

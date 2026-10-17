@@ -97,5 +97,6 @@ Getting back on the horse, the first planned update to spoonie is that database 
 
 October 17 2026
 Have sa good chucnk of time to do somethings, mostly with the wife, thought id add some code to spoonie while she was asleep. Hope she doesnt mind. Added a feature where users can mark when the took their medications durring the day. Morning, afternoon, evening and overnight. Thought simple would be best, could be more precise but we will see how it looks and can make changes as needed. one step closer to being done and submited for Googles public release.
+Upon discussion with the wife, she wanted me to include a fith check box one designated for early morning medications. I dont really see the point as we already have a morning medication checkbox but its something she wants and so i added it.
 Current desires from the wife:
 
